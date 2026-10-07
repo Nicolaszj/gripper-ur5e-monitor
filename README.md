@@ -1,4 +1,4 @@
-# Maximiliano Estudiante · Monitor del gripper
+# Grupo DIST · Monitor del gripper
 
 Aplicación Docker con **Node-RED + InfluxDB 2 + Grafana**. Recibe telemetría del
 ESP32, guarda el histórico y muestra los 21 grupos de datos solicitados,
