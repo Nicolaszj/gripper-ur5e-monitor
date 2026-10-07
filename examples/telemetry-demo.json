@@ -1,0 +1,76 @@
+{
+  "device_id": "gripper-01",
+  "boot_id": "DEMO-01",
+  "source": "simulated",
+  "seq": 1,
+  "sample_time_ms": 4000,
+  "calibration_id": "DEMO-NO-CALIBRADO",
+  "opening_mm": 52.5,
+  "opening_target_mm": 20,
+  "grip_force_n": 0.0,
+  "force_limit_n": 25,
+  "object_detected": false,
+  "gripper_state": "closing",
+  "limit_open": false,
+  "limit_closed": false,
+  "ax_position_ticks": 556,
+  "ax_position_deg": 163.0,
+  "ax_speed_rpm": 12,
+  "ax_load_pct": 10,
+  "ax_voltage_v": 11.8,
+  "ax_temperature_c": 34.24,
+  "motor_blocked": false,
+  "communication_error": false,
+  "overcurrent_alarm": false,
+  "cycle_time_s": 12.0,
+  "motors": [
+    {
+      "id": 1,
+      "encoder_pulses": 1580,
+      "encoder_deg": 183.75,
+      "rpm": 10.24,
+      "current_a": 0.088,
+      "blocked": false
+    },
+    {
+      "id": 2,
+      "encoder_pulses": 1585,
+      "encoder_deg": 183.75,
+      "rpm": 11.24,
+      "current_a": 0.096,
+      "blocked": false
+    },
+    {
+      "id": 3,
+      "encoder_pulses": 1590,
+      "encoder_deg": 183.75,
+      "rpm": 12.24,
+      "current_a": 0.104,
+      "blocked": false
+    },
+    {
+      "id": 4,
+      "encoder_pulses": 1595,
+      "encoder_deg": 183.75,
+      "rpm": 13.24,
+      "current_a": 0.112,
+      "blocked": false
+    },
+    {
+      "id": 5,
+      "encoder_pulses": 1600,
+      "encoder_deg": 183.75,
+      "rpm": 14.24,
+      "current_a": 0.12,
+      "blocked": false
+    },
+    {
+      "id": 6,
+      "encoder_pulses": 1605,
+      "encoder_deg": 183.75,
+      "rpm": 15.24,
+      "current_a": 0.128,
+      "blocked": false
+    }
+  ]
+}

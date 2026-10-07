@@ -1,0 +1,3677 @@
+{
+  "uid": "gripper-estudiante",
+  "title": "Maximiliano Estudiante · Gripper",
+  "schemaVersion": 41,
+  "version": 1,
+  "description": "Monitor del gripper. Real y simulado separados. Datos actuales caducan a los 5 s. Calibración de apertura pendiente de verificación física.",
+  "tags": [
+    "ESP32",
+    "gripper",
+    "maximiliano-estudiante"
+  ],
+  "timezone": "America/Bogota",
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "GRIPPER · datos principales",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Apertura actual",
+      "description": "Referencia PDS 0–85 mm. ±0,5 mm es objetivo de validación, no precisión demostrada.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthmm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "min": 0,
+          "max": 85
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"opening_mm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Apertura objetivo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthmm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "min": 0,
+          "max": 85
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"opening_target_mm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Fuerza actual",
+      "description": "Celda + HX711 calibrados. No se obtiene fuerza en N de Present Load del AX-18A.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "forceN",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"grip_force_n\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Límite de fuerza",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "forceN",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"force_limit_n\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Velocidad de apertura/cierre",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:mm/s",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"opening_speed_mm_s\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Objeto detectado",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "gray"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"object_detected\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Estado gripper",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "REPOSO",
+                  "color": "blue"
+                },
+                "1": {
+                  "text": "ABRIENDO",
+                  "color": "green"
+                },
+                "2": {
+                  "text": "CERRANDO",
+                  "color": "orange"
+                },
+                "3": {
+                  "text": "SUJETANDO",
+                  "color": "purple"
+                },
+                "4": {
+                  "text": "FALLO",
+                  "color": "red"
+                },
+                "5": {
+                  "text": "HOMING",
+                  "color": "yellow"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"gripper_state\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Tiempo de ciclo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"cycle_time_s\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Apertura · actual / objetivo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthmm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"opening_mm\" or r._field == \"opening_target_mm\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Fuerza · actual / límite",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "forceN",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"grip_force_n\" or r._field == \"force_limit_n\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "SEGURIDAD · estados informativos, no funciones de parada certificadas",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Límite abierto",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OFF",
+                  "color": "gray"
+                },
+                "1": {
+                  "text": "ON",
+                  "color": "blue"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"limit_open\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Límite cerrado",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OFF",
+                  "color": "gray"
+                },
+                "1": {
+                  "text": "ON",
+                  "color": "blue"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"limit_closed\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Motor bloqueado",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"motor_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Error comunicación",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"communication_error\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Sobrecorriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 25,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"overcurrent_alarm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Apertura fuera de referencia",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 25,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"opening_out_of_range\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Antigüedad última muestra",
+      "description": "Más de 5 s: dato obsoleto. SIN DATOS si no hay muestras en las últimas 24 h.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -24h, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"received_at_ms\")\n  |> group(columns: [\"_field\"])\n  |> last()\n  |> map(fn: (r) => ({r with _value: float(v: uint(v: now()) - uint(v: r._time)) / 1000000000.0}))\n"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Temperatura AX-18A",
+      "description": "El límite de alarma debe fijarse según la ficha y el diseño. No se presupone un umbral seguro.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 30,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_temperature_c\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "row",
+      "title": "AX-18A · diagnóstico",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Posición AX · ticks",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_position_ticks\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Posición AX · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 36,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_position_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Velocidad AX",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 36,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_speed_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Carga AX · indicador",
+      "description": "Present Load es diagnóstico estimado del actuador; no fuerza medida en N.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_load_pct\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Voltaje AX",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 41,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"ax_voltage_v\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "type": "row",
+      "title": "MOTORES M1–M6 · encoders y corriente",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "M1 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "M2 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m2_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "stat",
+      "title": "M3 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m3_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "M4 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m4_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "M5 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m5_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "M6 · Encoder · pulsos",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 47,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m6_encoder_pulses\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "M1 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "M2 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m2_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "M3 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m3_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "type": "stat",
+      "title": "M4 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m4_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "type": "stat",
+      "title": "M5 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m5_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "type": "stat",
+      "title": "M6 · Encoder · grados",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 52,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "degree",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m6_encoder_deg\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "stat",
+      "title": "M1 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "type": "stat",
+      "title": "M2 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m2_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "type": "stat",
+      "title": "M3 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m3_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "type": "stat",
+      "title": "M4 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m4_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "type": "stat",
+      "title": "M5 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m5_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "type": "stat",
+      "title": "M6 · Velocidad",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 57,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m6_rpm\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "type": "stat",
+      "title": "M1 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "type": "stat",
+      "title": "M2 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m2_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "type": "stat",
+      "title": "M3 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m3_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "type": "stat",
+      "title": "M4 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m4_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "stat",
+      "title": "M5 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m5_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "type": "stat",
+      "title": "M6 · Corriente",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 62,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m6_current_a\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "type": "stat",
+      "title": "M1 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "type": "stat",
+      "title": "M2 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m2_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "type": "stat",
+      "title": "M3 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m3_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "type": "stat",
+      "title": "M4 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m4_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "type": "stat",
+      "title": "M5 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m5_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "type": "stat",
+      "title": "M6 · Bloqueo",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 67,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NO",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "SÍ",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: -5s, stop: now())\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m6_blocked\")\n  |> group(columns: [\"_field\"])\n  |> last()\n"
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "type": "timeseries",
+      "title": "Velocidad M1–M6",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 72,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rotrpm",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_rpm\" or r._field == \"m2_rpm\" or r._field == \"m3_rpm\" or r._field == \"m4_rpm\" or r._field == \"m5_rpm\" or r._field == \"m6_rpm\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n"
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "type": "timeseries",
+      "title": "Corriente M1–M6",
+      "description": "",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "gripper-influx"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 72,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "decimals": 2,
+          "noValue": "SIN DATOS",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "gripper-influx"
+          },
+          "query": "from(bucket: \"gripper\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gripper\" and r.device_id == \"${device}\" and r.source == \"${source}\")\n  |> filter(fn: (r) => r._field == \"m1_current_a\" or r._field == \"m2_current_a\" or r._field == \"m3_current_a\" or r._field == \"m4_current_a\" or r._field == \"m5_current_a\" or r._field == \"m6_current_a\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "source",
+        "label": "Origen",
+        "type": "custom",
+        "query": "real,simulated",
+        "current": {
+          "text": "real",
+          "value": "real"
+        },
+        "options": [
+          {
+            "text": "real",
+            "value": "real",
+            "selected": true
+          },
+          {
+            "text": "simulated",
+            "value": "simulated",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "name": "device",
+        "label": "Dispositivo",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "gripper-influx"
+        },
+        "refresh": 1,
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"gripper\", tag: \"device_id\", start: -30d)",
+        "current": {
+          "text": "gripper-01",
+          "value": "gripper-01"
+        },
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  }
+}

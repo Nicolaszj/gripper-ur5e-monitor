@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HMI Gripper UR5e</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#111417;--surface:#1a1e22;--surface-2:#22272c;--surface-3:#2c3238;--border:#343b42;--border-strong:#6b7580;--ink:#e8ecef;--ink-2:#aab3bc;--ink-3:#8f99a3;--setpoint:#6fb1ff;--setpoint-soft:#6fb1ff40;--ok:#4fc3b4;--warn:#f2b33d;--warn-soft:#f2b33d33;--danger:#ff6b5e;--danger-soft:#ff6b5e2e;--on-danger:#1a0806;--estop:#d92d20;--on-estop:#ffffff;--estop-collar:#f2c230;--focus:var(--setpoint);--font-sans:"IBM Plex Sans", system-ui, sans-serif;--font-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--radius-sm:2px;--radius-md:4px;--radius-lg:6px;--control-h:40px;--control-h-touch:48px;--estop-h:48px;--track-h:8px;color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#eef0f2;--surface:#ffffff;--surface-2:#f5f6f7;--surface-3:#e3e6ea;--border:#d3d8dd;--border-strong:#6f7a85;--ink:#14181c;--ink-2:#48525c;--ink-3:#5a646e;--setpoint:#1257b8;--setpoint-soft:#1257b833;--ok:#0b6e63;--warn:#8a5a00;--warn-soft:#8a5a0029;--danger:#b3261e;--danger-soft:#b3261e1f;--on-danger:#ffffff;--estop:#c4271b;--on-estop:#ffffff;--estop-collar:#f2c230;--focus:var(--setpoint);color-scheme:light}}
+:root[data-theme="light"]{--bg:#eef0f2;--surface:#ffffff;--surface-2:#f5f6f7;--surface-3:#e3e6ea;--border:#d3d8dd;--border-strong:#6f7a85;--ink:#14181c;--ink-2:#48525c;--ink-3:#5a646e;--setpoint:#1257b8;--setpoint-soft:#1257b833;--ok:#0b6e63;--warn:#8a5a00;--warn-soft:#8a5a0029;--danger:#b3261e;--danger-soft:#b3261e1f;--on-danger:#ffffff;--estop:#c4271b;--on-estop:#ffffff;--estop-collar:#f2c230;--focus:var(--setpoint);color-scheme:light}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-sans)}
+.hmi{container-type:inline-size;font-family:var(--font-sans);font-size:14px;line-height:20px;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;text-align:left}
+.hmi *,.hmi *::before,.hmi *::after{box-sizing:border-box}
+.hmi [hidden]{display:none!important}
+.hmi button{font:inherit;color:inherit;margin:0}
+.hmi :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hmi-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:500}
+.hmi-label{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.hmi-nota{font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-unit{font-family:var(--font-sans);font-size:12px;font-weight:400;color:var(--ink-3);margin-left:var(--space-1)}
+.hmi-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4);min-width:0}
+.hmi-panel__head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2);margin-bottom:var(--space-3)}
+.hmi-sub{margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--border)}
+.hmi-sub>.hmi-label{margin-bottom:var(--space-2)}
+.hmi-btn{height:var(--control-h);padding:0 var(--space-4);border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface-2);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);white-space:nowrap}
+.hmi-btn:hover{background:var(--surface-3)}
+.hmi-btn:active{transform:translateY(1px)}
+.hmi-btn:disabled{color:var(--ink-3);border-color:var(--border);cursor:not-allowed;background:transparent}
+.hmi-btn--sm{height:28px;padding:0 var(--space-3);font-size:12px}
+.hmi .hmi-btn--inv{background:var(--on-danger);color:var(--danger);border-color:var(--on-danger)}
+.hmi .hmi-btn--inv:hover{background:var(--on-danger);opacity:.9}
+.hmi-btn__glyph{width:10px;height:10px;background:currentColor;flex:none}
+.hmi-acciones{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)}
+.hmi-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--border-strong);border-radius:var(--radius-md);overflow:hidden}
+.hmi-seg button{height:var(--control-h);border:0;border-left:1px solid var(--border-strong);background:transparent;cursor:pointer;padding:0 var(--space-2);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.hmi-seg button:first-child{border-left:0}
+.hmi-seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.hmi-seg button:disabled{cursor:not-allowed;opacity:.55}
+.hmi-seg button:focus-visible{outline-offset:-3px}
+.hmi-campo{display:grid;gap:var(--space-1);margin-top:var(--space-3)}
+.hmi-campo>span{font-size:13px;color:var(--ink-2)}
+.hmi-estop{height:var(--estop-h);padding:4px;border:0;border-radius:var(--radius-md);background:var(--estop-collar);cursor:pointer;flex:none}
+.hmi-estop>span{display:flex;align-items:center;gap:var(--space-2);height:100%;padding:0 var(--space-4);border-radius:var(--radius-sm);background:var(--estop);color:var(--on-estop);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.hmi-estop>span::before{content:"";width:14px;height:14px;border-radius:50%;border:3px solid var(--on-estop);flex:none}
+.hmi-estop[aria-pressed="true"]>span{box-shadow:inset 0 0 0 2px var(--on-estop)}
+.hmi-estop:focus-visible{outline-offset:3px}
+.hmi-ciclo{list-style:none;margin:0;padding:0;display:flex;gap:var(--space-1);min-width:0}
+.hmi-paso{flex:1 1 0;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:center;padding:6px 6px 9px;border:1px solid var(--border);border-radius:var(--radius-md);position:relative;color:var(--ink-3);background:transparent}
+.hmi-paso__n{width:20px;height:20px;border:1px solid currentColor;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;line-height:1}
+.hmi-paso__t{display:grid;min-width:0}
+.hmi-paso__t b{font-size:13px;line-height:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmi-paso__t i{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:normal;font-family:var(--font-mono);font-size:12px;line-height:16px}
+.hmi-paso__bar{position:absolute;left:-1px;right:-1px;bottom:-1px;height:3px;border-radius:0 0 var(--radius-md) var(--radius-md);overflow:hidden}
+.hmi-paso__bar i{display:block;height:100%;width:0;background:var(--ok)}
+.hmi-paso[data-estado="hecho"]{color:var(--ink-2)}
+.hmi-paso[data-estado="hecho"] .hmi-paso__n{background:var(--ink-2);border-color:var(--ink-2);color:var(--surface)}
+.hmi-paso[data-estado="activo"]{color:var(--ink);border-color:var(--ink);background:var(--surface-2)}
+.hmi-paso[data-estado="activo"] .hmi-paso__n{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.hmi-paso[data-tipo="falla"]{flex:1.25 1 0;margin-left:var(--space-2);border-style:dashed;border-color:var(--border-strong)}
+.hmi-paso[data-tipo="falla"] .hmi-paso__n{border-radius:var(--radius-sm)}
+.hmi-paso[data-estado="falla"]{background:var(--danger);border-color:var(--danger);border-style:solid;color:var(--on-danger)}
+.hmi-paso[data-estado="falla"] .hmi-paso__n{background:var(--on-danger);border-color:var(--on-danger);color:var(--danger);font-weight:700}
+.hmi-bin{display:flex;align-items:center;gap:var(--space-2);min-width:0}
+.hmi-bin__lamp{width:12px;height:12px;flex:none;border:2px solid var(--border-strong);border-radius:var(--radius-sm);background:transparent}
+.hmi-bin__txt{display:grid;min-width:0}
+.hmi-bin__label{font-size:12px;line-height:16px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmi-bin__state{font-size:13px;line-height:16px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.hmi-bin[data-estado="on"] .hmi-bin__lamp{background:var(--ok);border-color:var(--ok)}
+.hmi-bin[data-estado="on"] .hmi-bin__state{color:var(--ink)}
+.hmi-bin[data-estado="aviso"] .hmi-bin__lamp{background:var(--warn);border-color:var(--warn);border-radius:50%}
+.hmi-bin[data-estado="aviso"] .hmi-bin__state{color:var(--warn)}
+.hmi-bin[data-estado="falla"] .hmi-bin__lamp{background:var(--danger);border-color:var(--danger);transform:rotate(45deg)}
+.hmi-bin[data-estado="falla"] .hmi-bin__state{color:var(--danger)}
+.hmi-bin--caja{padding:var(--space-2) var(--space-3);background:var(--surface-2);border-radius:var(--radius-md)}
+.hmi-bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.hmi-bins--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hmi-ctl{display:grid;gap:6px;padding:var(--space-2) 0}
+.hmi-ctl+.hmi-ctl{border-top:1px solid var(--border)}
+.hmi-ctl__top{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-2)}
+.hmi-ctl__label{font-size:14px;line-height:20px;font-weight:500;min-width:0}
+.hmi-ctl__label small{display:block;font-size:12px;line-height:16px;font-weight:400;color:var(--ink-3)}
+.hmi-ctl__vals{display:flex;gap:var(--space-3);align-items:flex-end;flex:none}
+.hmi-ctl__val{display:grid;justify-items:end}
+.hmi-ctl__val i{font-style:normal;font-size:12px;line-height:14px;color:var(--ink-3)}
+.hmi-ctl__val b{font-family:var(--font-mono);font-weight:500;font-size:14px;line-height:20px;min-width:5ch;text-align:right}
+.hmi-ctl__val--sp b{color:var(--setpoint)}
+.hmi-ctl__u{font-size:12px;line-height:20px;color:var(--ink-3);min-width:34px}
+.hmi-ctl__track{position:relative;height:24px}
+.hmi-ctl__track::before{content:"";position:absolute;left:0;right:0;top:8px;height:var(--track-h);background:var(--surface-3);border-radius:var(--radius-sm)}
+.hmi-ctl__fill{position:absolute;left:0;top:8px;height:var(--track-h);width:var(--pv,0%);background:var(--ink-2);border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.hmi-ctl__band{position:absolute;top:3px;height:18px;left:var(--b0,0%);width:calc(var(--b1,0%) - var(--b0,0%));background:var(--setpoint-soft);border-left:1px solid var(--setpoint);border-right:1px solid var(--setpoint)}
+.hmi-ctl__pvmark{position:absolute;top:4px;height:16px;width:2px;left:var(--pv,0%);margin-left:-1px;background:var(--ink)}
+.hmi-ctl__thumb{position:absolute;top:0;left:var(--sp,0%);width:10px;height:24px;margin-left:-5px;background:var(--setpoint);border:2px solid var(--surface);border-radius:var(--radius-sm)}
+.hmi-ctl__track input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+.hmi-ctl__track:focus-within .hmi-ctl__thumb{outline:2px solid var(--focus);outline-offset:2px}
+.hmi-ctl__scale{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-ctl__state{font-family:var(--font-sans);font-weight:600}
+.hmi-ctl__state[data-s="ok"]{color:var(--ok)}
+.hmi-ctl__state[data-s="fuera"]{color:var(--warn)}
+.hmi-ctl[data-off="true"] .hmi-ctl__thumb{background:var(--border-strong)}
+.hmi-ctl[data-off="true"] .hmi-ctl__val--sp b{color:var(--ink-3)}
+.hmi-ctl[data-off="true"] input{cursor:not-allowed}
+.hmi-ctl--compacto{padding:0;border:0!important}
+.hmi-ctl--compacto .hmi-ctl__top{display:grid;justify-content:stretch;gap:2px}
+.hmi-ctl--compacto .hmi-ctl__vals{justify-content:space-between;gap:var(--space-1)}
+.hmi-ctl--compacto .hmi-ctl__val{justify-items:start}
+.hmi-ctl--compacto .hmi-ctl__val b{min-width:0;text-align:left}
+.hmi-ctl--compacto .hmi-ctl__u{display:none}
+.hmi-trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);padding:var(--space-2) 0;border-top:1px solid var(--border)}
+.hmi-motor{background:var(--surface-2);border-radius:var(--radius-md);padding:var(--space-3);display:grid;gap:var(--space-2);border:1px solid transparent}
+.hmi-motor__head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2)}
+.hmi-motor__name{font-size:15px;line-height:20px;font-weight:600}
+.hmi-motor__rol{display:block;font-size:12px;line-height:16px;font-weight:400;color:var(--ink-3)}
+.hmi-tag{font-size:12px;line-height:16px;font-weight:600;padding:2px var(--space-2);border-radius:var(--radius-sm);border:1px solid var(--border-strong);color:var(--ink-2);white-space:nowrap}
+.hmi-tag[data-z="pico"]{border-color:var(--warn);color:var(--warn)}
+.hmi-tag[data-z="excede"]{border-color:var(--danger);background:var(--danger);color:var(--on-danger)}
+.hmi-tag[data-z="confirmar"]{border-color:var(--warn);color:var(--warn);border-style:dashed}
+.hmi-motor__vals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.hmi-motor__v{display:grid}
+.hmi-motor__v i{font-style:normal;font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-motor__v b{font-family:var(--font-mono);font-weight:500;font-size:20px;line-height:24px;white-space:nowrap}
+.hmi-gauge{position:relative;height:var(--track-h);border-radius:var(--radius-sm);overflow:hidden;background:linear-gradient(to right,var(--surface-3) 0 var(--zc),var(--warn-soft) var(--zc) var(--zs),var(--danger-soft) var(--zs) 100%)}
+.hmi-gauge__fill{position:absolute;left:0;top:0;bottom:0;width:var(--pv,0%);background:var(--ink-2)}
+.hmi-gauge__tick{position:absolute;top:0;bottom:0;width:1px;background:var(--border-strong)}
+.hmi-motor[data-zona="pico"] .hmi-gauge__fill{background:var(--warn)}
+.hmi-motor[data-zona="excede"] .hmi-gauge__fill{background:var(--danger)}
+.hmi-motor[data-zona="excede"]{border-color:var(--danger)}
+.hmi-gauge__esc{position:relative;height:16px;font-family:var(--font-mono);font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-gauge__esc span{position:absolute;top:0;white-space:nowrap}
+.hmi-motor__disparo{font-size:12px;line-height:16px;color:var(--danger);font-weight:600}
+.hmi-alarmas{display:grid}
+.hmi-alarma{display:grid;grid-template-columns:20px minmax(0,1.1fr) minmax(0,1.3fr) minmax(0,.9fr) 96px 72px 92px;align-items:center;column-gap:var(--space-3);min-height:40px;padding:6px var(--space-2);border-top:1px solid var(--border)}
+.hmi-alarma__ico{width:14px;height:14px;position:relative;justify-self:center}
+.hmi-alarma__ico::before{content:"";position:absolute;left:1px;right:1px;top:6px;height:2px;background:var(--border-strong)}
+.hmi-alarma[data-estado="activa"] .hmi-alarma__ico::before,.hmi-alarma[data-estado="reconocida"] .hmi-alarma__ico::before{left:0;right:0;top:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid var(--danger);background:none}
+.hmi-alarma[data-estado="reconocida"] .hmi-alarma__ico::before{border-bottom-color:var(--warn)}
+.hmi-alarma__nombre{font-weight:600}
+.hmi-alarma__cond{font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-alarma__valor{font-family:var(--font-mono);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmi-alarma__estado{font-size:13px;font-weight:600;color:var(--ink-2)}
+.hmi-alarma__hora{font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
+.hmi-alarma[data-estado="activa"]{background:var(--danger-soft)}
+.hmi-alarma[data-estado="activa"] .hmi-alarma__estado{color:var(--danger)}
+.hmi-alarma[data-estado="reconocida"] .hmi-alarma__estado{color:var(--warn)}
+.hmi-alarma__accion{justify-self:end}
+.hmi-lect{display:grid;gap:2px;min-width:0}
+.hmi-lect__v{font-family:var(--font-mono);font-weight:500;font-size:32px;line-height:36px;white-space:nowrap}
+.hmi-lect__v--lg{font-size:20px;line-height:24px}
+.hmi-lect__v .hmi-unit{font-size:14px}
+.hmi-par{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.hmi-caja{background:var(--surface-2);border-radius:var(--radius-md);padding:var(--space-3);min-width:0}
+.hmi-meter{position:relative;height:var(--track-h);background:var(--surface-3);border-radius:var(--radius-sm);margin-top:var(--space-2)}
+.hmi-meter i{position:absolute;left:0;top:0;bottom:0;width:var(--pv,0%);background:var(--ink-2);border-radius:var(--radius-sm)}
+.hmi-meter[data-s="fuera"] i{background:var(--danger)}
+.hmi-meter b{position:absolute;top:-4px;bottom:-4px;width:2px;left:var(--lim,80%);background:var(--ink)}
+.hmi-gripper{display:grid;grid-template-columns:minmax(0,264px) minmax(0,1fr);gap:var(--space-4);align-items:start}
+.hmi-esq{width:100%;height:auto;display:block;background:var(--surface-2);border-radius:var(--radius-md)}
+.hmi-esq text{font-family:var(--font-sans);font-size:12px;fill:var(--ink-3)}
+.hmi-esq .t-num{font-family:var(--font-mono);fill:var(--ink);font-size:13px;font-weight:500}
+.hmi-esq .t-dedo{fill:var(--ink);font-weight:600;font-size:13px}
+.hmi-esq .palma{fill:var(--surface-3);stroke:var(--border-strong);stroke-width:1.5}
+.hmi-esq .brida{fill:none;stroke:var(--border-strong);stroke-width:1.5;stroke-dasharray:4 3}
+.hmi-esq .dedo{stroke:var(--ink-2);stroke-width:11;stroke-linecap:round;fill:none}
+.hmi-esq .dedo--c{stroke:var(--border-strong)}
+.hmi-esq .dedo--off{stroke-dasharray:1 16}
+.hmi-esq .junta{fill:var(--surface-2);stroke:var(--ink);stroke-width:2}
+.hmi-esq .junta--c{stroke:var(--border-strong)}
+.hmi-esq .pieza{fill:var(--setpoint-soft);stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:5 3}
+.hmi-esq .cota{stroke:var(--ink);stroke-width:1.5;fill:none}
+.hmi-esq .obj{stroke:var(--setpoint);stroke-width:1.5;stroke-dasharray:3 3;fill:none}
+.hmi-esq[data-falla="true"] .dedo--falla{stroke:var(--danger)}
+.hmi-angs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2);margin-top:var(--space-2)}
+.hmi-angs div{display:grid}
+.hmi-angs i{font-style:normal;font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-angs b{font-family:var(--font-mono);font-weight:500;font-size:14px}
+.hmi-trend{display:grid;gap:var(--space-2)}
+.hmi-lane{display:grid;grid-template-columns:112px minmax(0,1fr) 34px;gap:var(--space-2);align-items:stretch}
+.hmi-lane__id{display:grid;align-content:center}
+.hmi-lane__id i{font-style:normal;font-size:12px;line-height:16px;color:var(--ink-3)}
+.hmi-lane__id b{font-family:var(--font-mono);font-weight:500;font-size:20px;line-height:24px;white-space:nowrap}
+.hmi-lane svg{width:100%;height:72px;display:block;background:var(--surface-2);border-radius:var(--radius-sm)}
+.hmi-lane .grid{stroke:var(--border);stroke-width:1;vector-effect:non-scaling-stroke}
+.hmi-lane .pv{fill:none;stroke:var(--ink);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.hmi-lane .sp{fill:none;stroke:var(--setpoint);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.hmi-lane .band{fill:var(--setpoint-soft)}
+.hmi-lane__y{display:flex;flex-direction:column;justify-content:space-between;font-family:var(--font-mono);font-size:12px;line-height:14px;color:var(--ink-3)}
+.hmi-trend__x{display:grid;grid-template-columns:112px minmax(0,1fr) 34px;gap:var(--space-2);font-family:var(--font-mono);font-size:12px;color:var(--ink-3)}
+.hmi-trend__x div{display:flex;justify-content:space-between}
+.hmi-leyenda{display:flex;gap:var(--space-4);font-size:12px;color:var(--ink-3);align-items:center}
+.hmi-leyenda span{display:inline-flex;align-items:center;gap:6px}
+.hmi-leyenda span::before{content:"";width:18px;border-top:2px solid var(--ink)}
+.hmi-leyenda .l-sp::before{border-top:2px dashed var(--setpoint)}
+.hmi-leyenda .l-band::before{height:8px;border:0;background:var(--setpoint-soft);border-left:1px solid var(--setpoint);border-right:1px solid var(--setpoint)}
+.hmi-vars{padding:0}
+.hmi-vars summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-lg)}
+.hmi-vars summary::-webkit-details-marker{display:none}
+.hmi-vars summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);margin:0 4px 4px auto}
+.hmi-vars[open] summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+.hmi-vars__scroll{overflow-x:auto;border-top:1px solid var(--border)}
+.hmi-tabla{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+.hmi-tabla th{text-align:left;font-size:12px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--border);white-space:nowrap}
+.hmi-tabla td{padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--border);vertical-align:top}
+.hmi-tabla tr:last-child td{border-bottom:0}
+.hmi-tabla td.n{font-family:var(--font-mono);white-space:nowrap}
+.hmi-tabla td small{display:block;font-size:12px;line-height:16px;color:var(--ink-3);margin-top:2px}
+.hmi-bar{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-5);background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.hmi-bar__id{display:grid;flex:none}
+.hmi-bar__id b{font-size:15px;line-height:20px;font-weight:600;white-space:nowrap}
+.hmi-bar__id span{font-size:12px;line-height:16px;color:var(--ink-3);white-space:nowrap}
+.hmi-bar .hmi-ciclo{flex:1 1 auto}
+.hmi-bar__ind{display:flex;gap:var(--space-3);flex:none}
+.hmi-banner{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-5);background:var(--danger);color:var(--on-danger)}
+.hmi-banner b{font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.hmi-banner span{flex:1;min-width:0}
+.hmi-banner .hmi-num{font-weight:600}
+.hmi-simbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-4);padding:var(--space-2) var(--space-5);font-size:12px;color:var(--ink-3);border-bottom:1px dashed var(--border)}
+.hmi-simbar label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink-2)}
+.hmi-simbar input{accent-color:var(--setpoint);margin:0}
+.hmi-simbar .hmi-esp{flex:1}
+.hmi-grid{display:grid;grid-template-columns:364px minmax(0,1fr) 376px;gap:var(--space-4);padding:var(--space-4) var(--space-5) var(--space-5);align-items:start}
+.hmi-col{display:grid;gap:var(--space-4);min-width:0}
+.hmi-z4{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--space-4);align-items:start}
+.hmi-z5{grid-column:1/-1}
+.hmi-motores{display:grid;gap:var(--space-2)}
+.hmi-movil-acciones{display:none}
+@container (max-width: 900px){
+  .hmi-bar{flex-wrap:wrap;gap:var(--space-2) var(--space-3);padding:var(--space-2) var(--space-4)}
+  .hmi-bar__id{flex:1 1 0;min-width:0;order:1}
+  .hmi-bar .hmi-estop{order:2}
+  .hmi-estop>span{padding:0 var(--space-3);font-size:12px}
+  .hmi-bar .hmi-ciclo{order:3;flex:1 1 100%}
+  .hmi-bar__ind{order:4;flex:1 1 100%;justify-content:space-between;gap:var(--space-2)}
+  .hmi-paso{padding:4px 4px 7px;justify-content:center;grid-template-columns:auto}
+  .hmi-paso .hmi-paso__t{display:none}
+  .hmi-paso[data-estado="activo"],.hmi-paso[data-estado="falla"]{flex:3 1 0;grid-template-columns:auto minmax(0,1fr);justify-content:start;padding-left:var(--space-2)}
+  .hmi-paso[data-estado="activo"] .hmi-paso__t,.hmi-paso[data-estado="falla"] .hmi-paso__t{display:grid}
+  .hmi-paso[data-tipo="falla"]{margin-left:var(--space-1)}
+  .hmi-banner{flex-wrap:wrap;padding:var(--space-3) var(--space-4);gap:var(--space-2)}
+  .hmi-banner span{flex:1 1 100%}
+  .hmi-simbar{padding:var(--space-2) var(--space-4)}
+  .hmi-grid{grid-template-columns:minmax(0,1fr);padding:var(--space-3);gap:var(--space-3)}
+  .hmi-col{display:contents}
+  .hmi-z-gripper{order:1}.hmi-z2{order:2}.hmi-z-motores{order:3}.hmi-z-trend{order:4}.hmi-z4{order:5}.hmi-z5{order:6}
+  .hmi-z4{grid-template-columns:minmax(0,1fr);gap:var(--space-3)}
+  .hmi-panel{padding:var(--space-3)}
+  .hmi-gripper{grid-template-columns:minmax(0,1fr)}
+  .hmi-btn,.hmi-seg button{height:var(--control-h-touch)}
+  .hmi-btn--sm{height:36px}
+  .hmi-simbar .hmi-btn--sm{height:28px}
+  .hmi-ctl__track{height:32px}
+  .hmi-ctl__track::before,.hmi-ctl__fill{top:12px}
+  .hmi-ctl__band{top:7px}.hmi-ctl__pvmark{top:8px}.hmi-ctl__thumb{top:4px}
+  .hmi-z2 .hmi-acciones{display:none}
+  .hmi-movil-acciones{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2);position:sticky;bottom:0;z-index:5;padding:var(--space-2) var(--space-3);background:var(--surface);border-top:1px solid var(--border)}
+  .hmi-alarma{grid-template-columns:20px minmax(0,1fr) auto;grid-template-areas:"ico nombre estado" ". cond hora" ". valor accion";row-gap:2px;padding:var(--space-2)}
+  .hmi-alarma__ico{grid-area:ico}.hmi-alarma__nombre{grid-area:nombre}.hmi-alarma__cond{grid-area:cond}.hmi-alarma__valor{grid-area:valor}.hmi-alarma__estado{grid-area:estado;justify-self:end}.hmi-alarma__hora{grid-area:hora;justify-self:end}.hmi-alarma__accion{grid-area:accion}
+  .hmi-lane{grid-template-columns:84px minmax(0,1fr) 30px}
+  .hmi-trend__x{grid-template-columns:84px minmax(0,1fr) 30px}
+  .hmi-lane__id b{font-size:16px}
+  .hmi-lect__v{font-size:26px;line-height:32px}
+  .hmi-motor__v b{font-size:18px}
+  .hmi-leyenda{flex-wrap:wrap;gap:var(--space-2) var(--space-3)}
+}
+.mon-nd{font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--ink-3)}
+.mon-herr{border-bottom-style:solid}
+.mon-campo{display:inline-flex;align-items:center;gap:var(--space-2);color:var(--ink-2)}
+.mon-herr .hmi-seg button{height:28px;font-size:12px;padding:0 var(--space-3)}
+.mon-herr select{font:inherit;font-size:12px;height:28px;padding:0 var(--space-2);margin-left:6px;color:var(--ink);background:var(--surface-2);border:1px solid var(--border-strong);border-radius:var(--radius-md)}
+.mon-herr a.hmi-btn{text-decoration:none;color:var(--ink)}
+.mon-aviso{display:flex;align-items:center;gap:var(--space-3);margin:var(--space-4) var(--space-5) 0;padding:var(--space-3) var(--space-4);border:1px dashed var(--warn);border-radius:var(--radius-md);color:var(--ink);font-size:13px}
+.mon-aviso span{flex:1;min-width:0}
+.mon [data-sinsp="true"] .hmi-ctl__thumb,.mon [data-sinpv="true"] .hmi-ctl__fill,.mon [data-sinpv="true"] .hmi-ctl__pvmark{display:none}
+.mon-meta{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-1) var(--space-4);margin:0;font-size:13px}
+.mon-meta dt{color:var(--ink-3)}
+.mon-meta dd{margin:0;font-family:var(--font-mono);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mon-meter b{display:none}
+.mon-esc{display:flex;justify-content:space-between;margin-top:var(--space-1);font-family:var(--font-mono);font-size:12px;line-height:16px;color:var(--ink-3)}
+.mon-esc span:nth-child(2){font-family:var(--font-sans)}
+.mon-z-m{grid-column:1/-1}
+.mon-m6{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--space-2)}
+.mon-m__vals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.mon-m .hmi-motor__v b{font-size:17px}
+.mon-spark{width:100%;height:32px;display:block;background:var(--surface);border-radius:var(--radius-sm)}
+.mon-spark .pv{fill:none;stroke:var(--ink);stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.mon-spark .grid{stroke:var(--border);stroke-width:1;vector-effect:non-scaling-stroke}
+.mon-m__enc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2);font-size:12px;line-height:16px}
+.mon-m__enc>span{display:grid;min-width:0}
+.mon-m__enc i{font-style:normal;color:var(--ink-3)}
+.mon-m__enc b{font-family:var(--font-mono);font-weight:500;font-size:13px;white-space:nowrap}
+.mon-m .hmi-tag[data-z=""]{border-style:dashed;color:var(--ink-3)}
+.mon-lista{margin:0;padding-left:var(--space-4);display:grid;gap:var(--space-2);font-size:13px;color:var(--ink-2)}
+.mon-apagado{opacity:.45}
+.mon .hmi-alarma{grid-template-columns:20px minmax(0,1.1fr) minmax(0,1.3fr) minmax(0,.9fr) 96px 72px 92px}
+@container (max-width: 1180px){.mon-m6{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (max-width: 900px){
+  .mon-aviso{margin:var(--space-3) var(--space-3) 0;flex-wrap:wrap}
+  .mon-z-m{order:4}.mon .hmi-z-trend{order:3}.mon .hmi-z-motores{order:5}
+  .mon-m6{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mon .hmi-alarma{grid-template-columns:20px minmax(0,1fr) auto}
+  .mon .hmi-bar__ind{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  'use strict';
+  var D = document;
+
+  function h(html) { var t = D.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+  function fmt(v, d) { if (v == null || isNaN(v)) return '—'; var s = Number(v).toFixed(d == null ? 0 : d); if (parseFloat(s) === 0) s = s.replace('-', ''); return s.replace('.', ',').replace('-', '−'); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function rad(d) { return d * Math.PI / 180; }
+  function ruido(a) { return (Math.random() * 2 - 1) * a; }
+  function hora(d) { function p(n) { return (n < 10 ? '0' : '') + n; } return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  var MOTORES = {
+    servo: { id: 'servo', nombre: 'Servo central', rol: 'MCP común · 3 dedos', i0: 0.15, is: 2.5, tc: 0.588, ts: 1.96, rpm: 111, tf: 0.08 },
+    A: { id: 'A', nombre: 'N20-A', rol: 'PIP dedo A', i0: 0.10, is: 1.6, tc: 0.117, ts: 0.39, rpm: 100, tf: 0.015 },
+    B: { id: 'B', nombre: 'N20-B', rol: 'PIP dedo B', i0: 0.10, is: 1.6, tc: 0.117, ts: 0.39, rpm: 100, tf: 0.015 },
+    C: { id: 'C', nombre: 'N20-C', rol: 'PIP dedo C', i0: 0.10, is: 1.6, tc: 0.117, ts: 0.39, rpm: 100, tf: 0.015 }
+  };
+  var ORDEN_MOT = ['servo', 'A', 'B', 'C'];
+  var LIM = { fuerza: [20, 250], vel: [20, 150], apertura: [0, 85], mcp: [0, 60], pip: [0, 45], tCierre: [0.5, 2], carga: 2, parada: 200, hzMin: 10, v: 24 };
+  var PASOS = [
+    { id: 'Reposo', nombre: 'Reposo' }, { id: 'Cierre', nombre: 'Cierre' }, { id: 'Apriete', nombre: 'Apriete' },
+    { id: 'Retención', nombre: 'Retención' }, { id: 'Apertura', nombre: 'Apertura' }
+  ];
+  var ALARMAS = [
+    { id: 'sobrecorriente', nombre: 'Sobrecorriente', cond: 'Corriente de un motor ≥ corriente de bloqueo' },
+    { id: 'bloqueo', nombre: 'Bloqueo mecánico', cond: 'Motor en movimiento a 0 rpm con corriente de bloqueo' },
+    { id: 'sensor', nombre: 'Pérdida de sensor', cond: 'Telemetría por debajo de 10 Hz o sin dato' },
+    { id: 'carga', nombre: 'Carga sobre 2 kg', cond: 'Masa sujeta mayor que 2 kg' }
+  ];
+  var CAUSAS = { sobrecorriente: 'Sobrecorriente', bloqueo: 'Bloqueo mecánico', sensor: 'Pérdida de sensor', carga: 'Carga sobre 2 kg', paro: 'Paro de emergencia' };
+
+  var VARIABLES = [
+    ['Fuerza de apriete (consigna)', 'N', '20 – 250 · ±10 %', 'Servo central + N20', 'PDS', ''],
+    ['Fuerza medida', 'N', '0 – 250', 'Celda de carga', 'PDS', ''],
+    ['Fuerza estimada', 'N', '0 – 250', 'Corriente de motores', 'Cálculo', ''],
+    ['Velocidad de cierre / apertura', 'mm/s', '20 – 150 · ±10 %', 'Derivada de la apertura', 'PDS', '85 mm en 0,5 – 2 s equivale a 42,5 – 170 mm/s; no coincide con el rango 20 – 150.'],
+    ['Apertura entre dedos', 'mm', '0 – 85 · ±0,5', 'Sensor de apertura', 'PDS', ''],
+    ['Ángulo MCP común', '°', '0 – 60', 'Servo central', 'PDS', 'Queda fijado por la apertura y los PIP; falta definir cuál de los dos manda.'],
+    ['Ángulo PIP A, B, C', '°', '0 – 45', 'Motores N20-A, N20-B, N20-C', 'PDS', ''],
+    ['Tiempo de cierre', 's', '0,5 – 2', 'Control de ciclo', 'PDS', 'El ciclo fija Cierre en 1,5 s y la consigna permite 0,5 – 2 s.'],
+    ['Modo', '—', '1 Central · 2 Independiente · 3 Híbrido', 'Selector', 'PDS', ''],
+    ['Tipo de agarre', '—', 'Pinch (A+B) · Power (A+B+C)', 'Selector', 'PDS', ''],
+    ['Tamaño de pieza estimado', 'mm', '0 – 85 · ±1', 'Apertura al contacto', 'Cálculo', ''],
+    ['Corriente servo central', 'A', '0,15 vacío · 2,5 bloqueo', 'Sensor de corriente', 'PDS', ''],
+    ['Corriente N20 (A, B, C)', 'A', '0,10 vacío · 1,6 bloqueo', 'Sensor de corriente', 'PDS', ''],
+    ['Par servo central', 'N·m', '0,588 continuo · 1,96 bloqueo', 'Estimado por corriente', 'Cálculo', ''],
+    ['Par N20 (A, B, C)', 'N·m', '0,117 continuo · 0,39 bloqueo', 'Estimado por corriente', 'Cálculo', ''],
+    ['Velocidad servo central', 'rpm', '0 – 111', 'Servo central', 'PDS', 'No se indica si 111 rpm es en vacío o nominal.'],
+    ['Velocidad N20 (A, B, C)', 'rpm', '0 – 100', 'Motores N20', 'PDS', 'No se indica si 100 rpm es en vacío o nominal.'],
+    ['Final de carrera apertura', '0 / 1', '—', 'Final de carrera', 'PDS', ''],
+    ['Final de carrera cierre', '0 / 1', '—', 'Final de carrera', 'PDS', ''],
+    ['Pieza presente', '0 / 1', '—', 'Sensor de proximidad', 'PDS', ''],
+    ['Potencia instantánea', 'W', '0 – 175', '24 V × suma de corrientes', 'Cálculo', 'Se calcula con 24 V en los cuatro motores; falta la tensión real de los N20.'],
+    ['Energía del ciclo', 'J', '—', 'Integral de la potencia', 'Cálculo', ''],
+    ['Carga sujeta', 'kg', '0 – 2', 'Estimada', 'PDS', ''],
+    ['Tiempo de parada segura', 'ms', '≤ 200', 'Control', 'PDS', ''],
+    ['Telemetría', 'Hz', '≥ 10', 'Enlace con el robot', 'PDS', ''],
+    ['Alimentación', 'V', '24', 'Fuente de 24 V', 'PDS', ''],
+    ['Señales con el robot', '0 / 1', '2 entradas · 2 salidas', 'E/S digitales UR5e', 'PDS', '']
+  ];
+
+  var K = { x0: 34.6, L1: 26, L2: 19.2, s: rad(10) };
+  function tipX(mcp, pip) { var t = rad(mcp) - K.s; return K.x0 - K.L1 * Math.sin(t) - K.L2 * Math.sin(t + rad(pip)); }
+  function apertura(mcp, pipA, pipB) { return Math.max(0, tipX(mcp, pipA) + tipX(mcp, pipB)); }
+  function mcpPara(ap, pipA, pipB) { var lo = 0, hi = 60; for (var i = 0; i < 24; i++) { var m = (lo + hi) / 2; if (apertura(m, pipA, pipB) > ap) lo = m; else hi = m; } return (lo + hi) / 2; }
+
+  function createSim(o) {
+    o = o || {};
+    var dt = 0.05, subs = [], timer = null, ultimo = 0;
+    var sp = { fuerza: 120, vel: 37, apertura: 30, mcp: 0, pipA: 15, pipB: 15, pipC: 15, tCierre: 1.5, modo: 3, agarre: 'power' };
+    sp.mcp = mcpPara(sp.apertura, sp.pipA, sp.pipB);
+    var st = {
+      estado: 'Reposo', tEstado: 0, durEst: 0, c: 0, contacto: false, f: 0, fCelda: 0, fCorr: 0,
+      pieza: o.pieza !== false, tamPieza: 38, masa: 0.45, tamEst: null, auto: o.auto !== false, detenido: false,
+      falla: null, tParada: null, energia: 0, potencia: 0, iTotal: 0, hz: 20, v24: 24.1, robot: true,
+      di: { abrir: 0, cerrar: 0 }, t: 0, vel: 0, velPico: 0, apertura: 85, tCierreMed: null,
+      mcp: 0, pip: { A: 0, B: 0, C: 0 }, mot: {}, hist: { f: [], o: [], i: [] },
+      alarmas: {}, fcAp: true, fcCi: false
+    };
+    ALARMAS.forEach(function (a) { st.alarmas[a.id] = { estado: 'normal', hora: null }; });
+
+    function pose(c) {
+      var k = sp.modo === 1 ? 1 : c;
+      return { mcp: sp.modo === 2 ? sp.mcp : c * sp.mcp, A: k * sp.pipA, B: k * sp.pipB, C: sp.agarre === 'pinch' ? 0 : k * sp.pipC };
+    }
+    function apDe(c) { var p = pose(c); return apertura(p.mcp, p.A, p.B); }
+    function cPara(ap) { var lo = 0, hi = 1; for (var i = 0; i < 22; i++) { var m = (lo + hi) / 2; if (apDe(m) > ap) lo = m; else hi = m; } return (lo + hi) / 2; }
+    function ir(e) { st.estado = e; st.tEstado = 0; }
+
+    function cerrar() {
+      if (st.falla) return; st.detenido = false; st.contacto = false; st.tamEst = null; st.energia = 0; st.velPico = 0;
+      st.durEst = Math.max(0.05, (apDe(st.c) - sp.apertura) / sp.vel); st.di.cerrar = 0.4; ir('Cierre');
+    }
+    function abrir() {
+      if (st.falla) return; st.detenido = false; st.contacto = false;
+      st.durEst = Math.max(0.05, (apDe(0) - apDe(st.c)) / sp.vel); st.di.abrir = 0.4; ir('Apertura');
+    }
+    function parar() {
+      if (st.falla) return; st.detenido = true; st.f = 0; st.contacto = false; st.tParada = Math.round(95 + Math.random() * 50); ir('Reposo');
+    }
+    function disparar(causa, motor, valor, tParada) {
+      if (st.falla) return;
+      st.falla = { causa: causa, texto: CAUSAS[causa], motor: motor || null, valor: valor == null ? null : valor, hora: new Date(), enPaso: st.estado };
+      st.tParada = tParada || Math.round(120 + Math.random() * 50);
+      var ids = causa === 'bloqueo' ? ['bloqueo', 'sobrecorriente'] : [causa];
+      ids.forEach(function (id) { if (st.alarmas[id]) st.alarmas[id] = { estado: 'activa', hora: st.falla.hora }; });
+      st.f = 0; st.vel = 0; st.contacto = false; ir('Falla'); medir(false); emitir();
+    }
+    function reconocer(id) { var a = st.alarmas[id]; if (a && a.estado === 'activa') a.estado = 'reconocida'; emitir(); }
+    function restablecer() {
+      if (!st.falla) return; st.falla = null;
+      ALARMAS.forEach(function (a) { st.alarmas[a.id] = { estado: 'normal', hora: null }; });
+      st.masa = Math.min(st.masa, 0.45); abrir(); emitir();
+    }
+    function set(k, v) {
+      if (st.falla) return;
+      sp[k] = v;
+      if (k === 'apertura') sp.mcp = mcpPara(v, sp.pipA, sp.pipB);
+      else if (k === 'mcp' || k === 'pipA' || k === 'pipB') sp.apertura = apertura(sp.mcp, sp.pipA, sp.pipB);
+      emitir();
+    }
+
+    function medir(registrar) {
+      var p = pose(st.c), mov = st.estado === 'Cierre' || st.estado === 'Apertura';
+      st.mcp = p.mcp; st.pip = { A: p.A, B: p.B, C: p.C };
+      var ap = apertura(p.mcp, p.A, p.B);
+      st.apertura = clamp(ap + (st.falla ? 0 : ruido(0.04)), 0, 85);
+      st.fcAp = ap >= 84.4; st.fcCi = ap <= 0.5;
+      st.fCelda = st.f > 0.5 ? st.f * (1 + ruido(0.012)) : 0;
+      st.fCorr = st.f > 0.5 ? st.f * 1.035 + ruido(st.f * 0.03) : 0;
+      var q = st.f / 250, sv = sp.modo === 1 ? 1.15 : sp.modo === 2 ? 0.1 : 0.8, nv = sp.modo === 1 ? 0 : sp.modo === 2 ? 1.15 : 0.8, tot = 0;
+      ORDEN_MOT.forEach(function (id) {
+        var m = MOTORES[id], esServo = id === 'servo';
+        var activo = esServo ? sp.modo !== 2 : (sp.modo !== 1 && !(id === 'C' && sp.agarre === 'pinch'));
+        var seMueve = mov && activo, tau = 0, i = 0.02, rpm = 0;
+        if (st.falla) { i = 0; }
+        else {
+          var hold = q * m.tc * (esServo ? sv : (id === 'C' && sp.agarre === 'pinch' ? 0 : nv));
+          tau = hold > 0.001 ? hold : (seMueve ? m.tf : 0);
+          if (hold > 0.001 || seMueve) i = (m.i0 + (m.is - m.i0) * tau / m.ts) * (1 + ruido(0.02));
+          if (seMueve) rpm = m.rpm * (1 - tau / m.ts) * clamp(sp.vel / 60, 0.25, 1) * (1 + ruido(0.01));
+        }
+        var zona = tau >= m.ts * 0.98 || i >= m.is * 0.98 ? 'excede' : tau > m.tc ? 'pico' : 'continuo';
+        st.mot[id] = { i: i, tau: tau, rpm: rpm, zona: zona, disparo: st.falla && st.falla.motor === id ? st.falla.valor : null };
+        tot += i;
+      });
+      st.iTotal = tot; st.potencia = tot * LIM.v;
+      if (registrar) {
+        st.energia += st.potencia * dt;
+        var H = st.hist; H.f.push(st.fCelda); H.o.push(st.apertura); H.i.push(tot);
+        if (H.f.length > 200) { H.f.shift(); H.o.shift(); H.i.shift(); }
+      }
+    }
+
+    function paso() {
+      st.t += dt; st.tEstado += dt;
+      st.di.abrir = Math.max(0, st.di.abrir - dt); st.di.cerrar = Math.max(0, st.di.cerrar - dt);
+      if (st.falla) return;
+      var ap0 = apDe(st.c);
+      if (st.estado === 'Reposo') {
+        if (st.auto && !st.detenido && st.tEstado > 1.5) cerrar();
+      } else if (st.estado === 'Cierre') {
+        var obj = Math.max(sp.apertura, ap0 - sp.vel * dt), toca = st.pieza && obj <= st.tamPieza;
+        if (toca) obj = Math.min(ap0, st.tamPieza);
+        st.c = cPara(obj);
+        if (toca || obj <= sp.apertura + 1e-6) { st.contacto = toca; st.tCierreMed = st.tEstado; if (toca) st.tamEst = st.tamPieza + ruido(0.4); ir('Apriete'); }
+      } else if (st.estado === 'Apriete') {
+        st.f = st.contacto ? sp.fuerza * clamp(st.tEstado / 0.3, 0, 1) : 0;
+        if (st.tEstado >= 0.3) ir('Retención');
+      } else if (st.estado === 'Retención') {
+        st.f = st.contacto ? sp.fuerza : 0;
+        if (st.tEstado >= 5) abrir();
+      } else if (st.estado === 'Apertura') {
+        st.f = 0;
+        var ab = Math.min(apDe(0), ap0 + sp.vel * dt); st.c = cPara(ab);
+        if (ab >= apDe(0) - 1e-6) { st.c = 0; ir('Reposo'); }
+      }
+      var v = Math.abs(apDe(st.c) - ap0) / dt;
+      st.vel = v > 0.5 ? v * (1 + ruido(0.02)) : 0; if (st.vel > st.velPico) st.velPico = st.vel;
+      medir(true);
+
+      ORDEN_MOT.forEach(function (id) { if (st.mot[id].zona === 'excede') disparar('sobrecorriente', id, st.mot[id].i); });
+      if (st.contacto && st.masa > LIM.carga) disparar('carga', null, st.masa);
+      if (st.hz < LIM.hzMin) disparar('sensor', null, st.hz);
+    }
+    function emitir() { subs.forEach(function (f) { f(st, sp); }); }
+    function tick() {
+      var ahora = Date.now(); if (D.hidden) { ultimo = 0; return; } if (ultimo) { var hz = 1000 / Math.max(1, ahora - ultimo); st.hz = st.hz * 0.9 + clamp(hz, 0, 20) * 0.1; if (st.hz > 18.5) st.hz = 20; } ultimo = ahora;
+      st.v24 = 24.1 + ruido(0.04);
+      paso(); emitir();
+    }
+    function avanzar(seg) { for (var n = Math.round(seg / dt); n > 0; n--) paso(); }
+
+    medir(false);
+    if (o.falla === 'bloqueo') {
+      avanzar(11.6);
+      disparar('bloqueo', 'B', 1.62, 142);
+    } else if (o.falla) { avanzar(6); disparar(o.falla, null, null, 142); }
+    else avanzar(o.precarga == null ? 6.2 : o.precarga);
+
+    var sim = {
+      st: st, sp: sp, set: set, cerrar: cerrar, abrir: abrir, parar: parar, disparar: disparar, reconocer: reconocer, restablecer: restablecer,
+      simularBloqueo: function () { if (st.falla) return; if (st.estado === 'Reposo') cerrar(); st.mot.B.i = 1.62; disparar('bloqueo', 'B', 1.62); },
+      on: function (f) { subs.push(f); f(st, sp); return sim; },
+      start: function () { if (!timer) { ultimo = 0; timer = setInterval(tick, dt * 1000); } return sim; },
+      stop: function () { clearInterval(timer); timer = null; return sim; }
+    };
+    return sim;
+  }
+
+  function PasoCiclo(p) {
+    var el = h('<li class="hmi-paso"><span class="hmi-paso__n"></span><span class="hmi-paso__t"><b></b><i></i></span><span class="hmi-paso__bar"><i></i></span></li>');
+    var n = el.querySelector('.hmi-paso__n'), b = el.querySelector('b'), d = el.querySelector('.hmi-paso__t i'), bar = el.querySelector('.hmi-paso__bar i'), last = {};
+    function update(q) {
+      for (var k in q) last[k] = q[k];
+      var e = last.estado || 'pendiente';
+      el.dataset.estado = e; if (last.tipo) el.dataset.tipo = last.tipo;
+      n.textContent = last.tipo === 'falla' ? '!' : (e === 'hecho' ? '✓' : last.n);
+      b.textContent = last.nombre; d.textContent = last.duracion || '';
+      bar.style.width = (e === 'activo' ? clamp(last.progreso || 0, 0, 1) * 100 : 0) + '%';
+      el.setAttribute('aria-current', e === 'activo' || e === 'falla' ? 'step' : 'false');
+    }
+    update(p || {}); return { el: el, update: update };
+  }
+  function LineaCiclo(p) {
+    var el = h('<ol class="hmi-ciclo" aria-label="Estado del ciclo"></ol>'), pasos = PASOS.map(function (s, i) { var c = PasoCiclo({ n: i + 1, nombre: s.nombre }); el.appendChild(c.el); return c; });
+    var falla = PasoCiclo({ tipo: 'falla', nombre: 'Falla', duracion: 'sin falla' }); el.appendChild(falla.el);
+    function update(q) {
+      var idx = PASOS.findIndex(function (s) { return s.id === q.estado; }), enFalla = q.estado === 'Falla';
+      var dur = q.duraciones || {};
+      pasos.forEach(function (c, i) {
+        c.update({ estado: enFalla ? 'pendiente' : i === idx ? 'activo' : (idx > 0 && i > 0 && i < idx ? 'hecho' : 'pendiente'), progreso: i === idx ? q.progreso : 0, duracion: dur[PASOS[i].id] || '' });
+      });
+      falla.update({ estado: enFalla ? 'falla' : 'pendiente', duracion: enFalla ? (q.causa || 'activa') : 'sin falla' });
+    }
+    if (p) update(p); return { el: el, update: update };
+  }
+
+  function IndicadorBinario(p) {
+    var el = h('<div class="hmi-bin" role="status"><span class="hmi-bin__lamp"></span><span class="hmi-bin__txt"><span class="hmi-bin__label"></span><b class="hmi-bin__state"></b></span></div>');
+    var l = el.querySelector('.hmi-bin__label'), s = el.querySelector('.hmi-bin__state'), last = {};
+    function update(q) {
+      for (var k in q) last[k] = q[k];
+      var e = last.estado || (last.activo ? 'on' : 'off');
+      el.dataset.estado = e; el.classList.toggle('hmi-bin--caja', !!last.caja);
+      l.textContent = last.etiqueta || '';
+      s.textContent = last.texto != null ? last.texto : (e === 'on' ? (last.textoOn || 'Activo') : e === 'off' ? (last.textoOff || 'Inactivo') : (last.textoFalla || 'Falla'));
+    }
+    update(p || {}); return { el: el, update: update };
+  }
+
+  function ControlConsigna(p) {
+    p = p || {};
+    var dec = p.dec || 0, min = p.min, max = p.max;
+    var el = h('<div class="hmi-ctl' + (p.compacto ? ' hmi-ctl--compacto' : '') + '">' +
+      '<div class="hmi-ctl__top"><span class="hmi-ctl__label">' + esc(p.etiqueta) + (p.nota ? '<small>' + esc(p.nota) + '</small>' : '') + '</span>' +
+      '<div class="hmi-ctl__vals"><span class="hmi-ctl__val hmi-ctl__val--sp"><i>Consigna</i><b></b></span><span class="hmi-ctl__val hmi-ctl__val--pv"><i>Medida</i><b></b></span><span class="hmi-ctl__u">' + esc(p.unidad || '') + '</span></div></div>' +
+      '<div class="hmi-ctl__track"><div class="hmi-ctl__fill"></div><div class="hmi-ctl__band"></div><div class="hmi-ctl__pvmark"></div><div class="hmi-ctl__thumb"></div>' +
+      '<input type="range" min="' + min + '" max="' + max + '" step="' + (p.paso || 1) + '" aria-label="' + esc(p.etiqueta) + ' — consigna en ' + esc(p.unidad || '') + '"></div>' +
+      '<div class="hmi-ctl__scale"><span>' + fmt(min, p.decEscala || 0) + '</span><span class="hmi-ctl__state"></span><span>' + fmt(max, p.decEscala || 0) + '</span></div></div>');
+    var inp = el.querySelector('input'), bSp = el.querySelector('.hmi-ctl__val--sp b'), bPv = el.querySelector('.hmi-ctl__val--pv b'), band = el.querySelector('.hmi-ctl__band'), state = el.querySelector('.hmi-ctl__state'), last = {};
+    function pct(v) { return clamp((v - min) / (max - min), 0, 1) * 100; }
+    inp.addEventListener('input', function () { if (p.onChange) p.onChange(parseFloat(inp.value)); else update({ valor: parseFloat(inp.value) }); });
+    function update(q) {
+      for (var k in q) last[k] = q[k];
+      var v = last.valor, m = last.medida, tol = p.tol, lo = v, hi = v;
+      if (D.activeElement !== inp || Math.abs(parseFloat(inp.value) - v) > (p.paso || 1)) inp.value = v;
+      inp.disabled = !!last.deshabilitado; el.dataset.off = !!last.deshabilitado;
+      bSp.textContent = fmt(v, dec); bPv.textContent = m == null ? '—' : fmt(m, p.decMedida == null ? dec : p.decMedida);
+      el.style.setProperty('--sp', pct(v) + '%'); el.style.setProperty('--pv', pct(m == null ? min : m) + '%');
+      if (tol) { var d = tol.pct ? v * tol.pct / 100 : tol.abs; lo = v - d; hi = v + d; el.style.setProperty('--b0', pct(lo) + '%'); el.style.setProperty('--b1', pct(hi) + '%'); band.hidden = false; } else band.hidden = true;
+      var s = '', txt = last.estadoTexto || '';
+      if (last.evaluar && m != null) {
+        if (tol) { s = m >= lo && m <= hi ? 'ok' : 'fuera'; txt = (s === 'ok' ? 'En banda ' : 'Fuera de banda ') + (tol.pct ? '±' + tol.pct + ' %' : '±' + fmt(tol.abs, 1) + ' ' + p.unidad); }
+        else if (p.limite === 'max') { s = m <= v ? 'ok' : 'fuera'; txt = s === 'ok' ? 'Dentro del límite' : 'Excede la consigna'; }
+      } else if (!txt && tol) txt = 'Tolerancia ' + (tol.pct ? '±' + tol.pct + ' %' : '±' + fmt(tol.abs, 1) + ' ' + p.unidad);
+      state.dataset.s = s; state.textContent = txt;
+    }
+    update({ valor: p.valor, medida: p.medida, evaluar: p.evaluar, deshabilitado: p.deshabilitado, estadoTexto: p.estadoTexto });
+    return { el: el, update: update };
+  }
+
+  var ZONAS = { continuo: 'Continuo', pico: 'Pico', excede: 'Excede' };
+  function TarjetaMotor(p) {
+    var m = p.motor, esc_ = m.is * 1.15, ic = m.i0 + (m.is - m.i0) * m.tc / m.ts;
+    function pc(i) { return clamp(i / esc_, 0, 1) * 100; }
+    var el = h('<article class="hmi-motor"><div class="hmi-motor__head"><span class="hmi-motor__name">' + esc(m.nombre) + '<span class="hmi-motor__rol">' + esc(m.rol) + '</span></span><span class="hmi-tag"></span></div>' +
+      '<div class="hmi-motor__vals"><span class="hmi-motor__v"><i>Corriente</i><b data-k="i"></b></span><span class="hmi-motor__v"><i>Par</i><b data-k="tau"></b></span><span class="hmi-motor__v"><i>Velocidad</i><b data-k="rpm"></b></span></div>' +
+      '<div><div class="hmi-gauge" role="img" style="--zc:' + pc(ic) + '%;--zs:' + pc(m.is) + '%"><div class="hmi-gauge__fill"></div><span class="hmi-gauge__tick" style="left:' + pc(m.i0) + '%"></span><span class="hmi-gauge__tick" style="left:' + pc(ic) + '%"></span><span class="hmi-gauge__tick" style="left:' + pc(m.is) + '%"></span></div>' +
+      '<div class="hmi-gauge__esc"><span style="left:0">vacío ' + fmt(m.i0, 2) + '</span><span style="left:' + pc(ic) + '%">cont. ≤ ' + fmt(ic, 2) + '</span><span style="right:0">bloqueo ' + fmt(m.is, 1) + ' A</span></div></div>' +
+      '<div class="hmi-motor__disparo" hidden></div></article>');
+    var tag = el.querySelector('.hmi-tag'), g = el.querySelector('.hmi-gauge'), bi = el.querySelector('[data-k=i]'), bt = el.querySelector('[data-k=tau]'), br = el.querySelector('[data-k=rpm]'), dsp = el.querySelector('.hmi-motor__disparo');
+    function update(q) {
+      var z = q.disparo != null ? 'excede' : (q.zona || 'continuo');
+      el.dataset.zona = z; tag.dataset.z = z; tag.textContent = q.disparo != null ? 'Excede · detenido' : ZONAS[z];
+      bi.innerHTML = fmt(q.i, 2) + '<span class="hmi-unit">A</span>'; bt.innerHTML = fmt(q.tau, 3) + '<span class="hmi-unit">N·m</span>'; br.innerHTML = fmt(q.rpm, 0) + '<span class="hmi-unit">rpm</span>';
+      var iv = q.disparo != null ? q.disparo : q.i;
+      g.style.setProperty('--pv', pc(iv) + '%'); g.setAttribute('aria-label', 'Corriente ' + fmt(iv, 2) + ' A, zona ' + ZONAS[z]);
+      dsp.hidden = q.disparo == null; if (q.disparo != null) dsp.textContent = 'Al disparo: ' + fmt(q.disparo, 2) + ' A a 0 rpm. Motor sin energía.';
+    }
+    update(p); return { el: el, update: update };
+  }
+
+  var EST_AL = { normal: 'Normal', activa: 'Activa', reconocida: 'Reconocida' };
+  function FilaAlarma(p) {
+    var el = h('<div class="hmi-alarma" role="row"><span class="hmi-alarma__ico" aria-hidden="true"></span><span class="hmi-alarma__nombre"></span><span class="hmi-alarma__cond"></span><span class="hmi-alarma__valor"></span><span class="hmi-alarma__estado"></span><span class="hmi-alarma__hora"></span><span class="hmi-alarma__accion"><button class="hmi-btn hmi-btn--sm" type="button">Reconocer</button></span></div>');
+    var q = function (s) { return el.querySelector(s); }, btn = q('button'), last = {};
+    btn.addEventListener('click', function () { if (last.onReconocer) last.onReconocer(); else update({ estado: 'reconocida' }); });
+    function update(n) {
+      for (var k in n) last[k] = n[k];
+      var e = last.estado || 'normal'; el.dataset.estado = e;
+      q('.hmi-alarma__nombre').textContent = last.nombre; q('.hmi-alarma__cond').textContent = last.condicion || '';
+      q('.hmi-alarma__valor').textContent = last.valor || '—'; q('.hmi-alarma__estado').textContent = EST_AL[e];
+      q('.hmi-alarma__hora').textContent = last.hora || '—'; btn.hidden = e !== 'activa';
+    }
+    update(p || {}); return { el: el, update: update };
+  }
+
+  function Acciones(p) {
+    p = p || {};
+    var el = h('<div class="hmi-acciones' + (p.clase ? ' ' + p.clase : '') + '"><button class="hmi-btn" type="button" data-a="abrir">Abrir</button><button class="hmi-btn" type="button" data-a="cerrar">Cerrar</button><button class="hmi-btn" type="button" data-a="parar"><span class="hmi-btn__glyph"></span>Parar</button></div>');
+    el.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && p.onAccion) p.onAccion(b.dataset.a); });
+    return { el: el, update: function (q) { Array.prototype.forEach.call(el.children, function (b) { b.disabled = !!q.deshabilitado; }); } };
+  }
+  function Selector(p) {
+    var el = h('<div class="hmi-seg" role="group" aria-label="' + esc(p.etiqueta) + '"></div>');
+    p.opciones.forEach(function (o) { var b = h('<button type="button">' + esc(o[1]) + '</button>'); b.dataset.v = o[0]; el.appendChild(b); });
+    el.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; if (p.onChange) p.onChange(b.dataset.v); else update({ valor: b.dataset.v }); });
+    function update(q) { Array.prototype.forEach.call(el.children, function (b) { if (q.valor != null) b.setAttribute('aria-pressed', String(b.dataset.v) === String(q.valor)); if (q.deshabilitado != null) b.disabled = !!q.deshabilitado; }); }
+    update({ valor: p.valor }); return { el: el, update: update };
+  }
+  function ParoEmergencia(p) {
+    var el = h('<button class="hmi-estop" type="button" aria-pressed="false"><span>Paro de emergencia</span></button>');
+    el.addEventListener('click', function () { if (p && p.onParo) p.onParo(); });
+    return { el: el, update: function (q) { el.setAttribute('aria-pressed', !!q.activo); el.firstChild.textContent = q.activo ? 'Paro activo' : 'Paro de emergencia'; } };
+  }
+
+  function Esquema() {
+    var k = 2.2, cx = 150, y0 = 84;
+    var el = h('<svg class="hmi-esq" viewBox="0 0 300 300" role="img" aria-label="Vista lateral esquemática del gripper">' +
+      '<rect class="brida" x="110" y="10" width="80" height="26" rx="2"/><text x="150" y="27" text-anchor="middle">Brida UR5e</text>' +
+      '<rect class="palma" x="52" y="40" width="196" height="38" rx="3"/><text x="150" y="63" text-anchor="middle">Servo central · MCP</text>' +
+      '<rect class="pieza" data-r="pieza" rx="2"/>' +
+      '<g data-r="dC"><polyline class="dedo dedo--c"/><circle class="junta junta--c" r="5"/><circle class="junta junta--c" r="4"/></g>' +
+      '<g data-r="dA"><polyline class="dedo"/><circle class="junta" r="5"/><circle class="junta" r="4"/></g>' +
+      '<g data-r="dB"><polyline class="dedo"/><circle class="junta" r="5"/><circle class="junta" r="4"/></g>' +
+      '<text class="t-dedo" data-r="tA" text-anchor="end">A</text><text class="t-dedo" data-r="tB" text-anchor="end">B</text><text class="t-dedo" data-r="tC">C</text>' +
+      '<line class="obj" data-r="o1" y1="232" y2="262"/><line class="obj" data-r="o2" y1="232" y2="262"/>' +
+      '<path class="cota" data-r="cota"/><text class="t-num" data-r="tAp" x="150" y="284" text-anchor="middle"></text></svg>');
+    var r = {}; Array.prototype.forEach.call(el.querySelectorAll('[data-r]'), function (n) { r[n.dataset.r] = n; });
+    function dedo(g, lado, mcp, pip, dx) {
+      var t = rad(mcp) - K.s, bx = cx + lado * (K.x0 * k) + dx, px = bx - lado * K.L1 * k * Math.sin(t), py = y0 + K.L1 * k * Math.cos(t);
+      var tx = px - lado * K.L2 * k * Math.sin(t + rad(pip)), ty = py + K.L2 * k * Math.cos(t + rad(pip));
+      g.children[0].setAttribute('points', bx + ',' + y0 + ' ' + px.toFixed(1) + ',' + py.toFixed(1) + ' ' + tx.toFixed(1) + ',' + ty.toFixed(1));
+      g.children[1].setAttribute('cx', bx); g.children[1].setAttribute('cy', y0); g.children[2].setAttribute('cx', px.toFixed(1)); g.children[2].setAttribute('cy', py.toFixed(1));
+      return { tx: tx, ty: ty, bx: bx };
+    }
+    function update(st, sp) {
+      var a = dedo(r.dA, -1, st.mcp, st.pip.A, 0), b = dedo(r.dB, 1, st.mcp, st.pip.B, 0), c = dedo(r.dC, 1, st.mcp, st.pip.C, 16);
+      r.tA.setAttribute('x', a.bx - 14); r.tA.setAttribute('y', y0 + 22); r.tB.setAttribute('x', b.bx - 14); r.tB.setAttribute('y', y0 + 22); r.tC.setAttribute('x', c.bx + 12); r.tC.setAttribute('y', y0 + 22);
+      r.dC.children[0].classList.toggle('dedo--off', sp.agarre === 'pinch');
+      r.dB.children[0].classList.toggle('dedo--falla', !!(st.falla && st.falla.motor === 'B')); r.dA.children[0].classList.toggle('dedo--falla', !!(st.falla && st.falla.motor === 'A'));
+      el.dataset.falla = !!st.falla;
+      var w = st.tamPieza * k; r.pieza.setAttribute('x', cx - w / 2); r.pieza.setAttribute('y', 150); r.pieza.setAttribute('width', w); r.pieza.setAttribute('height', 56); r.pieza.style.display = st.pieza ? '' : 'none';
+      var x1 = cx - st.apertura * k / 2, x2 = cx + st.apertura * k / 2, y = 250;
+      r.cota.setAttribute('d', 'M' + x1.toFixed(1) + ' ' + (y - 8) + 'V' + (y + 8) + 'M' + x2.toFixed(1) + ' ' + (y - 8) + 'V' + (y + 8) + 'M' + x1.toFixed(1) + ' ' + y + 'H' + x2.toFixed(1));
+      var o = sp.apertura * k / 2; r.o1.setAttribute('x1', cx - o); r.o1.setAttribute('x2', cx - o); r.o2.setAttribute('x1', cx + o); r.o2.setAttribute('x2', cx + o);
+      r.tAp.textContent = fmt(st.apertura, 1) + ' mm';
+    }
+    return { el: el, update: update };
+  }
+
+  function Tendencia() {
+    var carr = [{ k: 'f', n: 'Fuerza', u: 'N', max: 280, d: 0 }, { k: 'o', n: 'Apertura', u: 'mm', max: 90, d: 1 }, { k: 'i', n: 'Corriente total', u: 'A', max: 4, d: 2 }];
+    var el = h('<div class="hmi-trend"></div>');
+    carr.forEach(function (c) {
+      c.el = h('<div class="hmi-lane"><div class="hmi-lane__id"><i>' + c.n + '</i><b></b></div><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="' + c.n + ', últimos 10 segundos">' +
+        '<rect class="band" x="0" width="100" height="0"/><line class="grid" x1="50" x2="50" y1="0" y2="100"/><line class="grid" x1="0" x2="100" y1="50" y2="50"/><line class="sp" x1="0" x2="100"/><path class="pv"/></svg>' +
+        '<div class="hmi-lane__y"><span>' + c.max + '</span><span>0</span></div></div>');
+      c.b = c.el.querySelector('b'); c.pv = c.el.querySelector('.pv'); c.spl = c.el.querySelector('.sp'); c.band = c.el.querySelector('.band'); el.appendChild(c.el);
+    });
+    el.appendChild(h('<div class="hmi-trend__x"><span></span><div><span>−10 s</span><span>−5 s</span><span data-r="ahora">ahora</span></div><span></span></div>'));
+    el.appendChild(h('<div class="hmi-leyenda"><span>Medida</span><span class="l-sp">Consigna</span><span class="l-band">Tolerancia</span></div>'));
+    var ahora = el.querySelector('[data-r=ahora]');
+    function update(st, sp) {
+      ahora.textContent = st.falla ? 'disparo' : 'ahora';
+      carr.forEach(function (c) {
+        var a = st.hist[c.k], n = a.length, d = '', off = 200 - n;
+        for (var j = 0; j < n; j++) d += (j ? 'L' : 'M') + ((off + j) / 199 * 100).toFixed(2) + ' ' + (100 - clamp(a[j] / c.max, 0, 1) * 96 - 2).toFixed(2);
+        c.pv.setAttribute('d', d);
+        c.b.innerHTML = fmt(n ? a[n - 1] : 0, c.d) + '<span class="hmi-unit">' + c.u + '</span>';
+        var v = c.k === 'f' ? sp.fuerza : c.k === 'o' ? sp.apertura : null;
+        if (v == null) { c.spl.style.display = 'none'; return; }
+        var y = 100 - v / c.max * 96 - 2; c.spl.setAttribute('y1', y); c.spl.setAttribute('y2', y);
+        var t = c.k === 'f' ? v * 0.1 : 0.5, hh = Math.max(1.5, 2 * t / c.max * 96); c.band.setAttribute('y', y - hh / 2); c.band.setAttribute('height', hh);
+      });
+    }
+    return { el: el, update: update };
+  }
+
+  function TablaVariables(p) {
+    var filas = (p && p.filas) || VARIABLES, n = filas.filter(function (f) { return f[5]; }).length;
+    var el = h('<details class="hmi-panel hmi-vars"' + (p && p.abierta ? ' open' : '') + '><summary><span class="hmi-label">Tabla de variables · ' + filas.length + '</span><span class="hmi-tag" data-z="confirmar">' + n + ' por confirmar</span></summary>' +
+      '<div class="hmi-vars__scroll"><table class="hmi-tabla"><thead><tr><th>Variable</th><th>Unidad</th><th>Rango</th><th>Sensor o actuador</th><th>Fuente</th><th>Estado</th></tr></thead><tbody>' +
+      filas.map(function (f) { return '<tr><td>' + esc(f[0]) + '</td><td class="n">' + esc(f[1]) + '</td><td class="n">' + esc(f[2]) + '</td><td>' + esc(f[3]) + '</td><td>' + esc(f[4]) + '</td><td>' + (f[5] ? '<span class="hmi-tag" data-z="confirmar">Por confirmar</span><small>' + esc(f[5]) + '</small>' : '<span class="hmi-nota">Definida</span>') + '</td></tr>'; }).join('') +
+      '</tbody></table></div></details>');
+    return { el: el };
+  }
+
+  function Pantalla(root, o) {
+    o = o || {};
+    var sim = o.sim || createSim(o), sp = sim.sp;
+    root.classList.add('hmi'); root.innerHTML = '';
+    var ciclo = LineaCiclo(), estop = ParoEmergencia({ onParo: function () { sim.disparar('paro'); } });
+    var iRobot = IndicadorBinario({ etiqueta: 'Robot' }), iTel = IndicadorBinario({ etiqueta: 'Telemetría ≥ 10 Hz' }), iV = IndicadorBinario({ etiqueta: 'Alimentación' });
+    var bar = h('<header class="hmi-bar"><div class="hmi-bar__id"><b>Gripper 3 dedos</b><span>UR5e · EAFIT</span></div></header>');
+    bar.appendChild(ciclo.el); var ind = h('<div class="hmi-bar__ind"></div>'); [iRobot, iTel, iV].forEach(function (i) { ind.appendChild(i.el); }); bar.appendChild(ind); bar.appendChild(estop.el);
+    var banner = h('<div class="hmi-banner" role="alert" hidden><b>Falla</b><span></span><button class="hmi-btn hmi-btn--inv" type="button">Restablecer</button></div>');
+    banner.querySelector('button').addEventListener('click', sim.restablecer);
+    var simbar = h('<div class="hmi-simbar"><span>Simulación en el navegador</span><label><input type="checkbox" data-s="auto"> Ciclo automático</label><label><input type="checkbox" data-s="pieza"> Pieza de 38 mm presente</label><button class="hmi-btn hmi-btn--sm" type="button" data-s="bloqueo">Simular bloqueo en N20-B</button><span class="hmi-esp"></span><button class="hmi-btn hmi-btn--sm" type="button" data-s="tema"></button></div>');
+    var cAuto = simbar.querySelector('[data-s=auto]'), cPieza = simbar.querySelector('[data-s=pieza]'), bTema = simbar.querySelector('[data-s=tema]');
+    cAuto.addEventListener('change', function () { sim.st.auto = cAuto.checked; }); cPieza.addEventListener('change', function () { sim.st.pieza = cPieza.checked; });
+    simbar.querySelector('[data-s=bloqueo]').addEventListener('click', sim.simularBloqueo);
+    function tema() { return D.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+    function pintaTema() { bTema.textContent = tema() === 'dark' ? 'Tema: oscuro' : 'Tema: claro'; }
+    bTema.addEventListener('click', function () { D.documentElement.setAttribute('data-theme', tema() === 'dark' ? 'light' : 'dark'); pintaTema(); }); pintaTema();
+
+    function C(k, cfg) { cfg.onChange = function (v) { sim.set(k, v); }; cfg.valor = sp[k]; return ControlConsigna(cfg); }
+    var ctl = {
+      fuerza: C('fuerza', { etiqueta: 'Fuerza de apriete', unidad: 'N', min: 20, max: 250, paso: 5, decMedida: 1, tol: { pct: 10 } }),
+      vel: C('vel', { etiqueta: 'Velocidad de cierre / apertura', unidad: 'mm/s', min: 20, max: 150, paso: 1, decMedida: 1, tol: { pct: 10 } }),
+      apertura: C('apertura', { etiqueta: 'Apertura entre dedos', unidad: 'mm', min: 0, max: 85, paso: 0.5, dec: 1, tol: { abs: 0.5 } }),
+      mcp: C('mcp', { etiqueta: 'Ángulo MCP común', nota: 'Acoplado a la apertura', unidad: '°', min: 0, max: 60, paso: 0.5, dec: 1 }),
+      tCierre: C('tCierre', { etiqueta: 'Tiempo de cierre', nota: 'Límite de duración', unidad: 's', min: 0.5, max: 2, paso: 0.1, dec: 1, decMedida: 2, decEscala: 1, limite: 'max' })
+    };
+    var pips = { A: C('pipA', { etiqueta: 'PIP A', unidad: '°', min: 0, max: 45, paso: 1, decMedida: 1, compacto: true }), B: C('pipB', { etiqueta: 'PIP B', unidad: '°', min: 0, max: 45, paso: 1, decMedida: 1, compacto: true }), C: C('pipC', { etiqueta: 'PIP C', unidad: '°', min: 0, max: 45, paso: 1, decMedida: 1, compacto: true }) };
+    var sModo = Selector({ etiqueta: 'Modo', opciones: [[1, '1 Central'], [2, '2 Independiente'], [3, '3 Híbrido']], valor: sp.modo, onChange: function (v) { sim.set('modo', +v); } });
+    var sAgarre = Selector({ etiqueta: 'Tipo de agarre', opciones: [['pinch', 'Pinch (A+B)'], ['power', 'Power (A+B+C)']], valor: sp.agarre, onChange: function (v) { sim.set('agarre', v); } });
+    function accion(a) { sim[a](); }
+    var acc = Acciones({ onAccion: accion }), accM = Acciones({ onAccion: accion, clase: 'hmi-movil-acciones' });
+    var z2 = h('<section class="hmi-panel hmi-z2" aria-label="Consignas"><div class="hmi-panel__head"><h2 class="hmi-label">Consignas</h2><span class="hmi-nota">consigna · medida · tolerancia</span></div></section>');
+    [ctl.fuerza, ctl.vel, ctl.apertura, ctl.mcp].forEach(function (c) { z2.appendChild(c.el); });
+    var trio = h('<div class="hmi-trio"></div>'); ['A', 'B', 'C'].forEach(function (k) { trio.appendChild(pips[k].el); }); z2.appendChild(trio); z2.appendChild(ctl.tCierre.el);
+    var cm = h('<div class="hmi-campo"><span>Modo</span></div>'); cm.appendChild(sModo.el); z2.appendChild(cm);
+    var ca = h('<div class="hmi-campo"><span>Tipo de agarre</span></div>'); ca.appendChild(sAgarre.el); z2.appendChild(ca);
+    var sa = h('<div class="hmi-sub"></div>'); sa.appendChild(acc.el); z2.appendChild(sa);
+
+    var esq = Esquema();
+    var zg = h('<section class="hmi-panel hmi-z-gripper" aria-label="Gripper y fuerza"><div class="hmi-panel__head"><h2 class="hmi-label">Gripper · vista lateral</h2><span class="hmi-nota" data-r="modoTxt"></span></div><div class="hmi-gripper"><div data-r="esq"><div class="hmi-angs"><div><i>MCP</i><b data-r="aM"></b></div><div><i>PIP A</i><b data-r="aA"></b></div><div><i>PIP B</i><b data-r="aB"></b></div><div><i>PIP C</i><b data-r="aC"></b></div></div></div>' +
+      '<div class="hmi-col" style="gap:var(--space-2)"><p class="hmi-label">Fuerza de apriete</p><div class="hmi-par"><div class="hmi-caja hmi-lect"><span class="hmi-nota">Estimada por corriente</span><span class="hmi-lect__v" data-r="fCorr"></span></div><div class="hmi-caja hmi-lect"><span class="hmi-nota">Celda de carga</span><span class="hmi-lect__v" data-r="fCelda"></span></div></div><span class="hmi-nota" data-r="fDif"></span>' +
+      '<div class="hmi-par" style="margin-top:var(--space-2)"><div class="hmi-caja hmi-lect"><span class="hmi-nota">Apertura medida</span><span class="hmi-lect__v" data-r="ap"></span></div><div class="hmi-caja hmi-lect"><span class="hmi-nota">Tamaño de pieza estimado</span><span class="hmi-lect__v" data-r="tam"></span><span class="hmi-nota">±1 mm</span></div></div>' +
+      '</div></div><div class="hmi-bins" data-r="bins" style="margin-top:var(--space-3)"></div></section>');
+    var R = {}; function refs(n) { Array.prototype.forEach.call(n.querySelectorAll('[data-r]'), function (x) { R[x.dataset.r] = x; }); } refs(zg);
+    R.esq.insertBefore(esq.el, R.esq.firstChild);
+    var bFa = IndicadorBinario({ etiqueta: 'Final de carrera apertura', caja: true }), bFc = IndicadorBinario({ etiqueta: 'Final de carrera cierre', caja: true }), bPz = IndicadorBinario({ etiqueta: 'Pieza presente', caja: true, textoOn: 'Detectada', textoOff: 'Sin pieza' });
+    [bFa, bFc, bPz].forEach(function (b) { R.bins.appendChild(b.el); });
+    var tr = Tendencia();
+    var zt = h('<section class="hmi-panel hmi-z-trend" aria-label="Tendencia"><div class="hmi-panel__head"><h2 class="hmi-label">Últimos 10 s</h2><span class="hmi-nota" data-r="trTxt"></span></div></section>'); refs(zt); zt.appendChild(tr.el);
+
+    var zm = h('<section class="hmi-panel hmi-z-motores" aria-label="Motores"><div class="hmi-panel__head"><h2 class="hmi-label">Motores</h2><span class="hmi-nota">continuo · pico · excede</span></div><div class="hmi-motores" data-r="mot"></div><div class="hmi-sub"><div class="hmi-par"><div class="hmi-lect"><span class="hmi-nota">Potencia instantánea</span><span class="hmi-lect__v hmi-lect__v--lg" data-r="pot"></span></div><div class="hmi-lect"><span class="hmi-nota">Energía del ciclo</span><span class="hmi-lect__v hmi-lect__v--lg" data-r="ene"></span></div></div></div></section>'); refs(zm);
+    var tarj = {}; ORDEN_MOT.forEach(function (id) { tarj[id] = TarjetaMotor({ motor: MOTORES[id], i: 0, tau: 0, rpm: 0, zona: 'continuo' }); R.mot.appendChild(tarj[id].el); });
+
+    var z4 = h('<div class="hmi-z4"><section class="hmi-panel" aria-label="Alarmas"><div class="hmi-panel__head"><h2 class="hmi-label">Alarmas</h2><span class="hmi-nota" data-r="alTxt"></span></div><div class="hmi-alarmas" role="table" data-r="al"></div></section>' +
+      '<section class="hmi-panel" aria-label="Seguridad y señales"><div class="hmi-panel__head"><h2 class="hmi-label">Parada segura</h2><span class="hmi-nota">máximo 200 ms</span></div><div class="hmi-lect"><span class="hmi-lect__v hmi-lect__v--lg" data-r="tp"></span><span class="hmi-nota" data-r="tpTxt"></span></div><div class="hmi-meter" data-r="tpM"><i></i><b></b></div>' +
+      '<div class="hmi-sub"><p class="hmi-label">Señales con el robot</p><div class="hmi-bins hmi-bins--2" data-r="io"></div></div></section></div>'); refs(z4);
+    var filas = {}; ALARMAS.forEach(function (a) { filas[a.id] = FilaAlarma({ nombre: a.nombre, condicion: a.cond, onReconocer: function () { sim.reconocer(a.id); } }); R.al.appendChild(filas[a.id].el); });
+    var io = { abrir: IndicadorBinario({ etiqueta: 'Entrada 1 · Abrir', caja: true }), cerrar: IndicadorBinario({ etiqueta: 'Entrada 2 · Cerrar', caja: true }), sujeta: IndicadorBinario({ etiqueta: 'Salida 1 · Pieza sujeta', caja: true, textoOn: 'Sujeta', textoOff: 'No sujeta' }), listo: IndicadorBinario({ etiqueta: 'Salida 2 · Listo / Falla', caja: true, textoOn: 'Listo', textoFalla: 'Falla' }) };
+    ['abrir', 'cerrar', 'sujeta', 'listo'].forEach(function (k) { R.io.appendChild(io[k].el); });
+    var z5 = h('<div class="hmi-z5"></div>'); z5.appendChild(TablaVariables({ abierta: o.tablaAbierta }).el);
+
+    var grid = h('<main class="hmi-grid"></main>'), c1 = h('<div class="hmi-col"></div>'), c2 = h('<div class="hmi-col"></div>'), c3 = h('<div class="hmi-col"></div>');
+    c1.appendChild(z2); c2.appendChild(zg); c2.appendChild(zt); c3.appendChild(zm);
+    [c1, c2, c3, z4, z5].forEach(function (n) { grid.appendChild(n); });
+    [bar, banner, simbar, grid, accM.el].forEach(function (n) { root.appendChild(n); });
+
+    var MODOS = { 1: 'Modo 1 · Central', 2: 'Modo 2 · Independiente', 3: 'Modo 3 · Híbrido' };
+    function unidad(v, u) { return v + '<span class="hmi-unit">' + u + '</span>'; }
+    sim.on(function (st, sp) {
+      var f = st.falla, e = st.estado, off = !!f;
+      var prog = e === 'Cierre' || e === 'Apertura' ? st.tEstado / st.durEst : e === 'Apriete' ? st.tEstado / 0.3 : e === 'Retención' ? st.tEstado / 5 : 0;
+      ciclo.update({ estado: e, progreso: prog, causa: f ? f.texto : '', duraciones: { Reposo: st.detenido ? 'detenido' : 'espera', Cierre: fmt(sp.tCierre, 1) + ' s', Apriete: '0,3 s', 'Retención': '5 s', Apertura: '1,5 s' } });
+      estop.update({ activo: !!(f && f.causa === 'paro') });
+      iRobot.update({ estado: st.robot ? 'on' : 'falla', texto: st.robot ? 'Conectado' : 'Sin conexión' });
+      iTel.update({ estado: st.hz >= LIM.hzMin ? 'on' : 'falla', texto: fmt(st.hz, 0) + ' Hz' });
+      iV.update({ estado: Math.abs(st.v24 - 24) < 2.4 ? 'on' : 'falla', texto: fmt(st.v24, 1) + ' V' });
+      banner.hidden = !f;
+      if (f) banner.children[1].innerHTML = '<b style="text-transform:none;letter-spacing:0">' + esc(f.texto) + (f.motor ? ' · ' + esc(MOTORES[f.motor].nombre) : '') + '</b> · durante ' + esc(f.enPaso) + ' · <span class="hmi-num">' + hora(f.hora) + '</span> · parada segura en <span class="hmi-num">' + st.tParada + ' ms</span>. Motores sin energía; consignas bloqueadas.';
+      cAuto.checked = st.auto; cPieza.checked = st.pieza;
+      var ret = e === 'Retención', mov = e === 'Cierre' || e === 'Apertura', fin = e === 'Apriete' || e === 'Retención';
+      ctl.fuerza.update({ valor: sp.fuerza, medida: st.fCelda, evaluar: ret && st.contacto, deshabilitado: off });
+      ctl.vel.update({ valor: sp.vel, medida: st.vel, evaluar: mov && st.tEstado > 0.1, deshabilitado: off });
+      ctl.apertura.update({ valor: sp.apertura, medida: st.apertura, evaluar: fin && !st.contacto, estadoTexto: fin && st.contacto ? 'Contacto con pieza' : '', deshabilitado: off });
+      ctl.mcp.update({ valor: sp.mcp, medida: st.mcp, deshabilitado: off });
+      ctl.tCierre.update({ valor: sp.tCierre, medida: st.tCierreMed, evaluar: st.tCierreMed != null, deshabilitado: off });
+      pips.A.update({ valor: sp.pipA, medida: st.pip.A, deshabilitado: off }); pips.B.update({ valor: sp.pipB, medida: st.pip.B, deshabilitado: off }); pips.C.update({ valor: sp.pipC, medida: st.pip.C, deshabilitado: off || sp.agarre === 'pinch' });
+      sModo.update({ valor: sp.modo, deshabilitado: off }); sAgarre.update({ valor: sp.agarre, deshabilitado: off }); acc.update({ deshabilitado: off }); accM.update({ deshabilitado: off });
+      esq.update(st, sp); R.modoTxt.textContent = MODOS[sp.modo] + ' · ' + (sp.agarre === 'pinch' ? 'Pinch (A+B)' : 'Power (A+B+C)');
+      R.aM.textContent = fmt(st.mcp, 1) + '°'; R.aA.textContent = fmt(st.pip.A, 1) + '°'; R.aB.textContent = fmt(st.pip.B, 1) + '°'; R.aC.textContent = fmt(st.pip.C, 1) + '°';
+      R.fCorr.innerHTML = unidad(fmt(st.fCorr, 1), 'N'); R.fCelda.innerHTML = unidad(fmt(st.fCelda, 1), 'N');
+      R.fDif.textContent = st.fCelda > 1 ? 'Diferencia entre lecturas: ' + fmt(st.fCorr - st.fCelda, 1) + ' N (' + fmt((st.fCorr - st.fCelda) / st.fCelda * 100, 1) + ' %)' : 'Sin fuerza aplicada';
+      R.ap.innerHTML = unidad(fmt(st.apertura, 1), 'mm'); R.tam.innerHTML = st.tamEst == null ? '—' : unidad(fmt(st.tamEst, 1), 'mm');
+      bFa.update({ activo: st.fcAp }); bFc.update({ activo: st.fcCi }); bPz.update({ activo: st.pieza });
+      tr.update(st, sp); R.trTxt.textContent = f ? 'Congelada al disparo' : 'Fuerza · apertura · corriente';
+      ORDEN_MOT.forEach(function (id) { tarj[id].update(st.mot[id]); });
+      R.pot.innerHTML = unidad(fmt(st.potencia, 1), 'W'); R.ene.innerHTML = unidad(fmt(st.energia, 1), 'J');
+      var nAct = 0, maxI = 0, maxId = 'servo'; ORDEN_MOT.forEach(function (id) { var q = st.mot[id].i / MOTORES[id].is; if (q > maxI) { maxI = q; maxId = id; } });
+      var vals = { sobrecorriente: f && f.motor ? fmt(f.valor, 2) + ' A · ' + MOTORES[f.motor].nombre : fmt(maxI * 100, 0) + ' % · ' + MOTORES[maxId].nombre, bloqueo: f && f.causa === 'bloqueo' ? '0 rpm · ' + MOTORES[f.motor].nombre : 'Sin bloqueo', sensor: fmt(st.hz, 0) + ' Hz', carga: st.pieza ? fmt(st.masa, 2) + ' kg' : '0,00 kg' };
+      ALARMAS.forEach(function (a) { var s = st.alarmas[a.id]; if (s.estado !== 'normal') nAct++; filas[a.id].update({ estado: s.estado, hora: s.hora ? hora(s.hora) : '—', valor: vals[a.id] }); });
+      R.alTxt.textContent = nAct ? nAct + ' sin resolver' : 'Sin alarmas activas';
+      R.tp.innerHTML = st.tParada == null ? '—' : unidad(st.tParada, 'ms');
+      R.tpTxt.textContent = st.tParada == null ? 'Sin paradas registradas en esta sesión' : (st.tParada <= LIM.parada ? 'Última parada, dentro del límite' : 'Última parada, excede el límite');
+      R.tpM.style.setProperty('--pv', (st.tParada == null ? 0 : clamp(st.tParada / 250, 0, 1) * 100) + '%'); R.tpM.dataset.s = st.tParada > LIM.parada ? 'fuera' : '';
+      io.abrir.update({ activo: st.di.abrir > 0 }); io.cerrar.update({ activo: st.di.cerrar > 0 });
+      io.sujeta.update({ activo: ret && st.contacto && Math.abs(st.fCelda - sp.fuerza) <= sp.fuerza * 0.1 }); io.listo.update({ estado: f ? 'falla' : 'on' });
+    });
+    if (o.animar !== false) sim.start();
+    return { sim: sim, el: root };
+  }
+
+  window.GripperHMI = {
+    Pantalla: Pantalla, createSim: createSim, ControlConsigna: ControlConsigna, TarjetaMotor: TarjetaMotor, IndicadorBinario: IndicadorBinario,
+    PasoCiclo: PasoCiclo, LineaCiclo: LineaCiclo, FilaAlarma: FilaAlarma, Acciones: Acciones, Selector: Selector, ParoEmergencia: ParoEmergencia,
+    Esquema: Esquema, Tendencia: Tendencia, TablaVariables: TablaVariables, MOTORES: MOTORES, VARIABLES: VARIABLES, ALARMAS: ALARMAS, LIM: LIM, fmt: fmt
+  };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var G = window.GripperHMI, D = document, fmt = G.fmt;
+  var API = window.HMI_API || '/api/status';
+  var CADUCA_S = 5, SONDEO_MS = 400, VENTANA_MS = 60000, HUECO_MS = 2000;
+  var COD_ESTADO = ['idle', 'opening', 'closing', 'holding', 'fault', 'homing'];
+  var PASOS = [['homing', 'Homing'], ['idle', 'Reposo'], ['closing', 'Cerrando'], ['holding', 'Sujetando'], ['opening', 'Abriendo']];
+  var ORIGENES = { real: 'Real', simulated: 'Simulado' };
+
+  function h(html) { var t = D.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function bonito(v) { if (!(v > 0)) return 1; var p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+  function decDe(v) { return v >= 10 ? 0 : v >= 1 ? 1 : 2; }
+  function hora(d) { function p(n) { return (n < 10 ? '0' : '') + n; } return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  function lee(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function guarda(k, v) { try { localStorage.setItem(k, v); } catch (e) {  } }
+  var ND = '<span class="mon-nd">Sin datos</span>';
+  function lectura(el, v, dec, u) { el.innerHTML = v == null ? ND : fmt(v, dec) + (u ? '<span class="hmi-unit">' + u + '</span>' : ''); }
+
+  function Par(p) {
+    var el = h('<div class="hmi-ctl"><div class="hmi-ctl__top"><span class="hmi-ctl__label">' + esc(p.etiqueta) + '<small>' + esc(p.nota || '') + '</small></span>' +
+      '<div class="hmi-ctl__vals"><span class="hmi-ctl__val hmi-ctl__val--sp"><i>' + esc(p.nombreSp) + '</i><b></b></span><span class="hmi-ctl__val hmi-ctl__val--pv"><i>Actual</i><b></b></span><span class="hmi-ctl__u">' + esc(p.unidad) + '</span></div></div>' +
+      '<div class="hmi-ctl__track" role="img"><div class="hmi-ctl__fill"></div><div class="hmi-ctl__band"></div><div class="hmi-ctl__pvmark"></div><div class="hmi-ctl__thumb"></div></div>' +
+      '<div class="hmi-ctl__scale"><span data-r="min"></span><span class="hmi-ctl__state"></span><span data-r="max"></span></div></div>');
+    var bSp = el.querySelector('.hmi-ctl__val--sp b'), bPv = el.querySelector('.hmi-ctl__val--pv b'), tr = el.querySelector('.hmi-ctl__track'), st = el.querySelector('.hmi-ctl__state');
+    var band = el.querySelector('.hmi-ctl__band'), eMin = el.querySelector('[data-r=min]'), eMax = el.querySelector('[data-r=max]');
+    function update(q) {
+      var min = p.min, max = p.max != null ? p.max : bonito(Math.max(q.sp || 0, q.pv || 0, p.minEscala || 1) * 1.25);
+      function pct(v) { return clamp((v - min) / (max - min), 0, 1) * 100; }
+      bSp.textContent = q.sp == null ? '—' : fmt(q.sp, p.dec); bPv.textContent = q.pv == null ? '—' : fmt(q.pv, p.dec);
+      el.dataset.sinsp = q.sp == null; el.dataset.sinpv = q.pv == null;
+      el.style.setProperty('--sp', pct(q.sp || 0) + '%'); el.style.setProperty('--pv', pct(q.pv == null ? min : q.pv) + '%');
+      if (p.tol && q.sp != null) { el.style.setProperty('--b0', pct(q.sp - p.tol) + '%'); el.style.setProperty('--b1', pct(q.sp + p.tol) + '%'); band.hidden = false; } else band.hidden = true;
+      eMin.textContent = fmt(min, 0); eMax.textContent = fmt(max, decDe(max) === 2 ? 1 : 0);
+      var e = p.estado ? p.estado(q) : ['', '']; st.dataset.s = e[0]; st.textContent = e[1];
+      tr.setAttribute('aria-label', p.etiqueta + ': ' + (q.pv == null ? 'sin datos' : fmt(q.pv, p.dec) + ' ' + p.unidad) + (q.sp == null ? '' : ', ' + p.nombreSp.toLowerCase() + ' ' + fmt(q.sp, p.dec) + ' ' + p.unidad));
+    }
+    return { el: el, update: update };
+  }
+
+  function trazo(pts, t0, y) {
+    var d = '', prev = null;
+    pts.forEach(function (p) {
+      if (p[1] == null) { prev = null; return; }
+      var x = (p[0] - t0) / VENTANA_MS * 100; if (x < 0) { prev = p; return; }
+      d += (prev && p[0] - prev[0] <= HUECO_MS && d ? 'L' : 'M') + x.toFixed(2) + ' ' + y(p[1]).toFixed(2); prev = p;
+    });
+    return d;
+  }
+  function serie(hist, k) { return hist.map(function (p) { return [p.t, p[k]]; }); }
+  function extremo(hist, ks) { var m = 0; hist.forEach(function (p) { ks.forEach(function (k) { if (p[k] != null) m = Math.max(m, Math.abs(p[k])); }); }); return m; }
+  function hayNegativo(hist, ks) { return hist.some(function (p) { return ks.some(function (k) { return p[k] != null && p[k] < 0; }); }); }
+
+  function Tendencia() {
+    var carr = [
+      { n: 'Apertura', u: 'mm', d: 1, pv: 'ap', sp: 'apObj', max: 90 },
+      { n: 'Fuerza', u: 'N', d: 1, pv: 'f', sp: 'fLim', minEscala: 10 },
+      { n: 'Velocidad lineal', u: 'mm/s', d: 1, pv: 'v', signo: true, minEscala: 10 }
+    ];
+    var el = h('<div class="hmi-trend"></div>');
+    carr.forEach(function (c) {
+      c.el = h('<div class="hmi-lane"><div class="hmi-lane__id"><i>' + c.n + '</i><b></b></div><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="' + c.n + ', último minuto">' +
+        '<line class="grid" x1="50" x2="50" y1="0" y2="100"/><line class="grid" data-r="cero" x1="0" x2="100" y1="50" y2="50"/><path class="sp"/><path class="pv"/></svg><div class="hmi-lane__y"><span></span><span></span></div></div>');
+      c.b = c.el.querySelector('b'); c.pvEl = c.el.querySelector('.pv'); c.spEl = c.el.querySelector('.sp'); c.y = c.el.querySelectorAll('.hmi-lane__y span'); el.appendChild(c.el);
+    });
+    el.appendChild(h('<div class="hmi-trend__x"><span></span><div><span>−60 s</span><span>−30 s</span><span>ahora</span></div><span></span></div>'));
+    el.appendChild(h('<div class="hmi-leyenda"><span>Actual</span><span class="l-sp">Objetivo o límite</span></div>'));
+    function update(hist, ahora, vivo) {
+      var t0 = ahora - VENTANA_MS;
+      carr.forEach(function (c) {
+        var ks = c.sp ? [c.pv, c.sp] : [c.pv], neg = c.signo && hayNegativo(hist, ks);
+        var max = c.max || bonito(Math.max(extremo(hist, ks), c.minEscala) * 1.1), min = neg ? -max : 0;
+        function y(v) { return 100 - clamp((v - min) / (max - min), 0, 1) * 96 - 2; }
+        c.pvEl.setAttribute('d', trazo(serie(hist, c.pv), t0, y));
+        c.spEl.setAttribute('d', c.sp ? trazo(serie(hist, c.sp), t0, y) : '');
+        c.y[0].textContent = fmt(max, 0); c.y[1].textContent = fmt(min, 0);
+        var ult = hist.length ? hist[hist.length - 1][c.pv] : null;
+        lectura(c.b, vivo ? ult : null, c.d, c.u);
+      });
+    }
+    return { el: el, update: update };
+  }
+
+  function TarjetaM(i) {
+    var el = h('<article class="hmi-motor mon-m"><div class="hmi-motor__head"><span class="hmi-motor__name">M' + i + '</span><span class="hmi-tag"></span></div>' +
+      '<div class="mon-m__vals"><span class="hmi-motor__v"><i>Corriente</i><b data-k="i"></b></span><span class="hmi-motor__v"><i>Velocidad</i><b data-k="rpm"></b></span></div>' +
+      '<svg class="mon-spark" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Corriente de M' + i + ', último minuto"><path class="pv"/></svg>' +
+      '<svg class="mon-spark" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Velocidad de M' + i + ', último minuto"><line class="grid" x1="0" x2="100" y1="50" y2="50"/><path class="pv"/></svg>' +
+      '<div class="mon-m__enc"><span><i>Encoder</i><b data-k="p"></b></span><span><i>Ángulo</i><b data-k="g"></b></span></div></article>');
+    var tag = el.querySelector('.hmi-tag'), r = {}; Array.prototype.forEach.call(el.querySelectorAll('[data-k]'), function (n) { r[n.dataset.k] = n; });
+    var sp = el.querySelectorAll('.mon-spark'), pI = sp[0].querySelector('.pv'), pR = sp[1].querySelector('.pv'), cero = sp[1].querySelector('.grid');
+    function update(f, hist, t0, esc_) {
+      var b = f ? f['m' + i + '_blocked'] : null, hay = f && ['encoder_pulses', 'encoder_deg', 'rpm', 'current_a', 'blocked'].some(function (k) { return f['m' + i + '_' + k] != null; });
+      var z = b === 1 ? 'excede' : 'continuo'; el.dataset.zona = z; tag.dataset.z = hay ? z : ''; tag.textContent = !hay ? 'Sin datos' : b === 1 ? 'Bloqueado' : b === 0 ? 'Sin bloqueo' : 'Bloqueo sin dato';
+      lectura(r.i, f ? f['m' + i + '_current_a'] : null, 3, 'A'); lectura(r.rpm, f ? f['m' + i + '_rpm'] : null, 1, 'rpm');
+      lectura(r.p, f ? f['m' + i + '_encoder_pulses'] : null, 0, 'pulsos'); lectura(r.g, f ? f['m' + i + '_encoder_deg'] : null, 1, '°');
+      pI.setAttribute('d', trazo(serie(hist, 'mi' + i), t0, function (v) { return 100 - clamp(v / esc_.i, 0, 1) * 90 - 5; }));
+      var lo = esc_.rNeg ? -esc_.r : 0; cero.style.display = esc_.rNeg ? '' : 'none';
+      pR.setAttribute('d', trazo(serie(hist, 'mr' + i), t0, function (v) { return 100 - clamp((v - lo) / (esc_.r - lo), 0, 1) * 90 - 5; }));
+    }
+    return { el: el, update: update };
+  }
+
+  var M = [1, 2, 3, 4, 5, 6];
+  function porMotor(suf, dec) { return function (f) { var v = M.map(function (i) { return f['m' + i + '_' + suf]; }); return v.every(function (x) { return x == null; }) ? null : v.map(function (x) { return x == null ? '—' : fmt(x, dec); }).join(' · '); }; }
+  function num(k, dec) { return function (f) { return f[k] == null ? null : fmt(f[k], dec); }; }
+  function bin(k, si, no) { return function (f) { return f[k] == null ? null : f[k] ? si : no; }; }
+  var CONTRATO = [
+    ['Apertura actual', 'opening_mm', 'mm', 'AX-18A + geometría calibrada', num('opening_mm', 1)],
+    ['Apertura objetivo', 'opening_target_mm', 'mm', 'Consigna 0 – 85', num('opening_target_mm', 1)],
+    ['Fuerza actual', 'grip_force_n', 'N', 'Celda + HX711 calibrados', num('grip_force_n', 2)],
+    ['Fuerza límite', 'force_limit_n', 'N', 'Consigna', num('force_limit_n', 1)],
+    ['Velocidad lineal', 'opening_speed_mm_s', 'mm/s', 'Emisor o derivada de la apertura', num('opening_speed_mm_s', 1)],
+    ['Objeto detectado', 'object_detected', '0 / 1', 'Controlador o sensor', bin('object_detected', 'Sí', 'No')],
+    ['Estado', 'gripper_state', '—', 'Controlador', function (f) { var e = COD_ESTADO[f.gripper_state]; return e == null ? null : e; }],
+    ['Límite abierto', 'limit_open', '0 / 1', 'Final de carrera', bin('limit_open', 'On', 'Off')],
+    ['Límite cerrado', 'limit_closed', '0 / 1', 'Final de carrera', bin('limit_closed', 'On', 'Off')],
+    ['Posición AX', 'ax_position_ticks', 'ticks', 'AX-18A · 0 – 1023', num('ax_position_ticks', 0)],
+    ['Posición AX', 'ax_position_deg', '°', 'AX-18A · 0 – 300', num('ax_position_deg', 1)],
+    ['Velocidad AX', 'ax_speed_rpm', 'rpm', 'AX-18A, con signo', num('ax_speed_rpm', 1)],
+    ['Carga AX', 'ax_load_pct', '%', 'AX-18A, indicador estimado', num('ax_load_pct', 0)],
+    ['Voltaje AX', 'ax_voltage_v', 'V', 'AX-18A', num('ax_voltage_v', 1)],
+    ['Temperatura AX', 'ax_temperature_c', '°C', 'AX-18A', num('ax_temperature_c', 1)],
+    ['Algún motor bloqueado', 'motor_blocked', '0 / 1', 'Controlador', bin('motor_blocked', 'Sí', 'No')],
+    ['Error de comunicación', 'communication_error', '0 / 1', 'ESP32', bin('communication_error', 'Sí', 'No')],
+    ['Sobrecorriente', 'overcurrent_alarm', '0 / 1', 'Umbral del hardware', bin('overcurrent_alarm', 'Sí', 'No')],
+    ['Tiempo de ciclo', 'cycle_time_s', 's', 'Firmware', num('cycle_time_s', 1)],
+    ['Apertura fuera de referencia', 'opening_out_of_range', '0 / 1', 'Node-RED · fuera de 0 – 85 mm', bin('opening_out_of_range', 'Sí', 'No')],
+    ['M1 – M6 · encoder', 'motors[].encoder_pulses', 'pulsos', 'Encoders', porMotor('encoder_pulses', 0)],
+    ['M1 – M6 · ángulo', 'motors[].encoder_deg', '°', 'Encoders', porMotor('encoder_deg', 1)],
+    ['M1 – M6 · velocidad', 'motors[].rpm', 'rpm', 'Encoders, con signo', porMotor('rpm', 1)],
+    ['M1 – M6 · corriente', 'motors[].current_a', 'A', 'INA219', porMotor('current_a', 3)],
+    ['M1 – M6 · bloqueo', 'motors[].blocked', '0 / 1', 'Diagnóstico del controlador', function (f) { var v = M.map(function (i) { return f['m' + i + '_blocked']; }); return v.every(function (x) { return x == null; }) ? null : v.map(function (x) { return x == null ? '—' : x ? 'Sí' : 'No'; }).join(' · '); }]
+  ];
+
+  function crearFuente() {
+    var subs = [], hist = {}, visto = {}, m = { enlace: 'espera', muestras: [], ahora: Date.now() };
+    function punto(s) {
+      var f = s.fields || {}, p = { t: s.received_at_ms, ap: f.opening_mm, apObj: f.opening_target_mm, f: f.grip_force_n, fLim: f.force_limit_n, v: f.opening_speed_mm_s };
+      M.forEach(function (i) { p['mi' + i] = f['m' + i + '_current_a']; p['mr' + i] = f['m' + i + '_rpm']; });
+      return p;
+    }
+    function tick() {
+      var ctl = window.AbortController ? new AbortController() : null, to = setTimeout(function () { if (ctl) ctl.abort(); }, 3000);
+      fetch(API, { cache: 'no-store', signal: ctl ? ctl.signal : undefined }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (j) {
+        var ms = (j && j.samples) || [], srv = 0;
+        ms.forEach(function (s) {
+          var k = s.device_id + ':' + s.source, id = s.boot_id + ':' + s.seq;
+          srv = Math.max(srv, s.received_at_ms + Math.round((s.age_s || 0) * 1000));
+          if (visto[k] !== id) { visto[k] = id; (hist[k] = hist[k] || []).push(punto(s)); }
+        });
+        var ahora = srv || Date.now();
+        Object.keys(hist).forEach(function (k) { var a = hist[k]; while (a.length && a[0].t < ahora - VENTANA_MS - HUECO_MS) a.shift(); });
+        m = { enlace: 'ok', muestras: ms, ahora: ahora };
+      }).catch(function () { m = { enlace: 'error', muestras: m.muestras, ahora: m.ahora }; }).then(function () {
+        clearTimeout(to); subs.forEach(function (f) { f(m, hist); }); setTimeout(tick, SONDEO_MS);
+      });
+    }
+    return { on: function (f) { subs.push(f); }, start: tick };
+  }
+
+  function Monitor(root) {
+    root.classList.add('hmi', 'mon'); root.innerHTML = '';
+    var origen = lee('hmi-origen') === 'simulated' ? 'simulated' : 'real', dispositivo = lee('hmi-dispositivo') || 'gripper-01';
+
+    var bar = h('<header class="hmi-bar"><div class="hmi-bar__id"><b>Gripper UR5e</b><span data-r="sub">Monitor · EAFIT</span></div><ol class="hmi-ciclo" aria-label="Estado del gripper"></ol><div class="hmi-bar__ind"></div></header>');
+    var ol = bar.querySelector('ol'), pasos = PASOS.map(function (p, i) { var c = G.PasoCiclo({ n: i + 1, nombre: p[1] }); ol.appendChild(c.el); return c; });
+    var pFalla = G.PasoCiclo({ tipo: 'falla', nombre: 'Falla', duracion: 'sin falla' }); ol.appendChild(pFalla.el);
+    var iEnlace = G.IndicadorBinario({ etiqueta: 'Node-RED' }), iMuestra = G.IndicadorBinario({ etiqueta: 'Última muestra' }), iOrigen = G.IndicadorBinario({ etiqueta: 'Origen' });
+    var ind = bar.querySelector('.hmi-bar__ind'); [iEnlace, iMuestra, iOrigen].forEach(function (i) { ind.appendChild(i.el); });
+    var banner = h('<div class="hmi-banner" role="alert" hidden><b>Falla</b><span></span></div>');
+
+    var sOrigen = G.Selector({ etiqueta: 'Origen', opciones: [['real', 'Real'], ['simulated', 'Simulado']], valor: origen, onChange: function (v) { origen = v; guarda('hmi-origen', v); sOrigen.update({ valor: v }); pinta(); } });
+    var herr = h('<div class="hmi-simbar mon-herr"><span class="mon-campo">Origen</span><label for="mon-disp">Dispositivo <select id="mon-disp"></select></label><span class="hmi-esp"></span><a class="hmi-btn hmi-btn--sm" data-r="graf" target="_blank" rel="noopener">Histórico en Grafana</a><button class="hmi-btn hmi-btn--sm" type="button" data-r="tema"></button></div>');
+    herr.firstChild.appendChild(sOrigen.el);
+    var sel = herr.querySelector('select'), bTema = herr.querySelector('[data-r=tema]');
+    herr.querySelector('[data-r=graf]').href = location.protocol + '//' + location.hostname + ':3000/d/gripper-estudiante';
+    sel.addEventListener('change', function () { dispositivo = sel.value; guarda('hmi-dispositivo', dispositivo); pinta(); });
+    function tema() { var a = D.documentElement.getAttribute('data-theme'); if (a === 'light' || a === 'dark') return a; return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
+    function pintaTema() { bTema.textContent = tema() === 'dark' ? 'Tema: oscuro' : 'Tema: claro'; }
+    var t0 = lee('hmi-tema'); if (t0 === 'light' || t0 === 'dark') D.documentElement.setAttribute('data-theme', t0);
+    bTema.addEventListener('click', function () { var n = tema() === 'dark' ? 'light' : 'dark'; D.documentElement.setAttribute('data-theme', n); guarda('hmi-tema', n); pintaTema(); }); pintaTema();
+    var aviso = h('<div class="mon-aviso" role="status" hidden><span></span><button class="hmi-btn hmi-btn--sm" type="button" hidden>Ver simulado</button></div>');
+    aviso.querySelector('button').addEventListener('click', function () { origen = 'simulated'; guarda('hmi-origen', origen); sOrigen.update({ valor: origen }); pinta(); });
+
+    var pAp = Par({ etiqueta: 'Apertura', nota: 'Referencia PDS 0 – 85 mm', nombreSp: 'Objetivo', unidad: 'mm', min: 0, max: 85, dec: 1, tol: 0.5, estado: function (q) {
+      if (q.pv == null) return ['', '']; if (q.pv < 0 || q.pv > 85) return ['fuera', 'Fuera de referencia'];
+      return q.sp == null ? ['', ''] : ['', 'A ' + fmt(Math.abs(q.pv - q.sp), 1) + ' mm del objetivo'];
+    } });
+    var pF = Par({ etiqueta: 'Fuerza', nota: 'Celda de carga + HX711', nombreSp: 'Límite', unidad: 'N', min: 0, dec: 1, minEscala: 10, estado: function (q) {
+      if (q.pv == null || q.sp == null) return ['', '']; return q.pv <= q.sp ? ['ok', 'Dentro del límite'] : ['fuera', 'Sobre el límite'];
+    } });
+    var z1 = h('<section class="hmi-panel hmi-z2" aria-label="Objetivo y medida"><div class="hmi-panel__head"><h2 class="hmi-label">Objetivo y medida</h2><span class="hmi-nota">objetivo · actual</span></div><div data-r="pares"></div>' +
+      '<div class="hmi-par" style="margin-top:var(--space-3)"><div class="hmi-caja hmi-lect"><span class="hmi-nota">Velocidad lineal</span><span class="hmi-lect__v hmi-lect__v--lg" data-r="vel"></span><span class="hmi-nota" data-r="velTxt"></span></div><div class="hmi-caja hmi-lect"><span class="hmi-nota">Tiempo de ciclo</span><span class="hmi-lect__v hmi-lect__v--lg" data-r="ciclo"></span><span class="hmi-nota">último reportado</span></div></div>' +
+      '<div class="hmi-sub"><p class="hmi-label">Muestra</p><dl class="mon-meta"><dt>Dispositivo</dt><dd data-r="mDev"></dd><dt>Arranque</dt><dd data-r="mBoot"></dd><dt>Secuencia</dt><dd data-r="mSeq"></dd><dt>Calibración</dt><dd data-r="mCal"></dd><dt>Antigüedad</dt><dd data-r="mEdad"></dd></dl></div></section>');
+    var R = {}; function refs(n) { Array.prototype.forEach.call(n.querySelectorAll('[data-r]'), function (x) { R[x.dataset.r] = x; }); } refs(z1); refs(bar);
+    R.pares.appendChild(pAp.el); R.pares.appendChild(pF.el);
+
+    var esq = G.Esquema();
+    Array.prototype.forEach.call(esq.el.querySelectorAll('text'), function (t) { if (/Servo central/.test(t.textContent)) t.textContent = 'AX-18A'; });
+    var zg = h('<section class="hmi-panel hmi-z-gripper" aria-label="Gripper"><div class="hmi-panel__head"><h2 class="hmi-label">Gripper · vista lateral</h2><span class="hmi-nota" data-r="estTxt"></span></div><div class="hmi-gripper"><div data-r="esq"><p class="hmi-nota" style="margin:var(--space-2) 0 0">Esquema ilustrativo: la pose se dibuja a partir de la apertura, no de la geometría calibrada.</p></div>' +
+      '<div class="hmi-col" style="gap:var(--space-2)"><div class="hmi-par"><div class="hmi-caja hmi-lect"><span class="hmi-nota">Apertura actual</span><span class="hmi-lect__v" data-r="ap"></span></div><div class="hmi-caja hmi-lect"><span class="hmi-nota">Fuerza actual</span><span class="hmi-lect__v" data-r="f"></span></div></div>' +
+      '<div class="hmi-bins hmi-bins--2" data-r="bins" style="margin-top:var(--space-2)"></div></div></div></section>'); refs(zg);
+    R.esq.insertBefore(esq.el, R.esq.firstChild);
+    var bObj = G.IndicadorBinario({ etiqueta: 'Objeto detectado', caja: true }), bLa = G.IndicadorBinario({ etiqueta: 'Límite abierto', caja: true }), bLc = G.IndicadorBinario({ etiqueta: 'Límite cerrado', caja: true }), bFr = G.IndicadorBinario({ etiqueta: 'Rango 0 – 85 mm', caja: true });
+    [bObj, bFr, bLa, bLc].forEach(function (b) { R.bins.appendChild(b.el); });
+    var tr = Tendencia();
+    var zt = h('<section class="hmi-panel hmi-z-trend" aria-label="Tendencia"><div class="hmi-panel__head"><h2 class="hmi-label">Último minuto</h2><span class="hmi-nota">apertura · fuerza · velocidad</span></div></section>'); zt.appendChild(tr.el);
+
+    var zax = h('<section class="hmi-panel hmi-z-motores" aria-label="AX-18A"><div class="hmi-panel__head"><h2 class="hmi-label">AX-18A · diagnóstico</h2><span class="hmi-nota">actuador principal</span></div>' +
+      '<div class="hmi-motor"><div class="hmi-motor__vals"><span class="hmi-motor__v"><i>Posición</i><b data-r="axT"></b></span><span class="hmi-motor__v"><i>Ángulo</i><b data-r="axG"></b></span><span class="hmi-motor__v"><i>Velocidad</i><b data-r="axV"></b></span></div>' +
+      '<div><div class="hmi-meter mon-meter" data-r="axPos" role="img"><i></i></div><div class="mon-esc"><span>0</span><span>posición · ticks</span><span>1023</span></div></div></div>' +
+      '<div class="hmi-motor" style="margin-top:var(--space-2)"><div class="hmi-motor__vals"><span class="hmi-motor__v"><i>Carga</i><b data-r="axC"></b></span><span class="hmi-motor__v"><i>Voltaje</i><b data-r="axU"></b></span><span class="hmi-motor__v"><i>Temperatura</i><b data-r="axK"></b></span></div>' +
+      '<div><div class="hmi-meter mon-meter" data-r="axCar" role="img"><i></i></div><div class="mon-esc"><span>0</span><span>carga · % en valor absoluto</span><span>100</span></div></div></div>' +
+      '<p class="hmi-nota" style="margin:var(--space-3) 0 0">La carga es un indicador estimado del actuador; no es fuerza medida en newtons. El límite de temperatura lo fija la ficha del AX-18A.</p></section>'); refs(zax);
+
+    var zm = h('<section class="hmi-panel mon-z-m" aria-label="Motores M1 a M6"><div class="hmi-panel__head"><h2 class="hmi-label">Motores M1 – M6 · encoders y corriente</h2><span class="hmi-nota" data-r="mEsc"></span></div><div class="mon-m6" data-r="m6"></div></section>'); refs(zm);
+    var tarj = M.map(function (i) { var t = TarjetaM(i); R.m6.appendChild(t.el); return t; });
+
+    var z4 = h('<div class="hmi-z4"><section class="hmi-panel" aria-label="Avisos"><div class="hmi-panel__head"><h2 class="hmi-label">Avisos</h2><span class="hmi-nota" data-r="alTxt"></span></div><div class="hmi-alarmas" role="table" data-r="al"></div></section>' +
+      '<section class="hmi-panel" aria-label="Alcance"><div class="hmi-panel__head"><h2 class="hmi-label">Alcance del monitor</h2></div><ul class="mon-lista"><li>Solo lectura: no envía comandos a los actuadores.</li><li>Los avisos son informativos; no son una función de parada de seguridad.</li><li>Los valores instantáneos se ocultan si la última muestra tiene más de 5 s.</li><li>±0,5 mm es un objetivo por validar con medición física.</li></ul></section></div>'); refs(z4);
+    var AVISOS = [
+      { id: 'bloqueo', nombre: 'Motor bloqueado', cond: 'El controlador reporta algún motor bloqueado', campo: 'motor_blocked' },
+      { id: 'com', nombre: 'Error de comunicación', cond: 'El ESP32 reporta fallo de comunicación', campo: 'communication_error' },
+      { id: 'sobre', nombre: 'Sobrecorriente', cond: 'Umbral definido por el hardware', campo: 'overcurrent_alarm' },
+      { id: 'fuera', nombre: 'Apertura fuera de referencia', cond: 'Apertura fuera de 0 – 85 mm', campo: 'opening_out_of_range' },
+      { id: 'obsoleta', nombre: 'Muestra obsoleta', cond: 'Más de 5 s sin medición nueva' }
+    ];
+    var estAv = {};
+    AVISOS.forEach(function (a) { estAv[a.id] = { rec: false, hora: null }; a.fila = G.FilaAlarma({ nombre: a.nombre, condicion: a.cond, onReconocer: function () { estAv[a.id].rec = true; pinta(); } }); R.al.appendChild(a.fila.el); });
+
+    var z5 = h('<div class="hmi-z5"><details class="hmi-panel hmi-vars"><summary><span class="hmi-label">Contrato de telemetría v1 · ' + CONTRATO.length + ' datos</span><span class="hmi-tag" data-r="conDato"></span></summary><div class="hmi-vars__scroll"><table class="hmi-tabla"><thead><tr><th>Dato</th><th>Campo JSON</th><th>Unidad</th><th>Origen</th><th>Valor actual</th></tr></thead><tbody>' +
+      CONTRATO.map(function (c) { return '<tr><td>' + esc(c[0]) + '</td><td class="n">' + esc(c[1]) + '</td><td class="n">' + esc(c[2]) + '</td><td>' + esc(c[3]) + '</td><td class="n"></td></tr>'; }).join('') + '</tbody></table></div></details></div>'); refs(z5);
+    var celdas = z5.querySelectorAll('tbody td:last-child');
+
+    var grid = h('<main class="hmi-grid"></main>'), c1 = h('<div class="hmi-col"></div>'), c2 = h('<div class="hmi-col"></div>'), c3 = h('<div class="hmi-col"></div>');
+    c1.appendChild(z1); c2.appendChild(zg); c2.appendChild(zt); c3.appendChild(zax);
+    [c1, c2, c3, zm, z4, z5].forEach(function (n) { grid.appendChild(n); });
+    [bar, banner, herr, aviso, grid].forEach(function (n) { root.appendChild(n); });
+
+    var modelo = { enlace: 'espera', muestras: [], ahora: Date.now() }, historias = {};
+    function binario(ind, v, on, off, alerta) { ind.update(v == null ? { estado: 'off', texto: 'Sin datos' } : { estado: v ? (alerta ? 'aviso' : 'on') : 'off', texto: v ? on : off }); }
+
+    function pinta() {
+      var ms = modelo.muestras, disp = ms.filter(function (s) { return s.source === origen; }).map(function (s) { return s.device_id; });
+      if (disp.indexOf(dispositivo) < 0) disp.unshift(dispositivo);
+      var firma = disp.join('|'); if (sel.dataset.f !== firma) { sel.dataset.f = firma; sel.innerHTML = disp.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join(''); } sel.value = dispositivo;
+      var clave = dispositivo + ':' + origen, s = ms.filter(function (x) { return x.device_id === dispositivo && x.source === origen; })[0] || null;
+      var edad = s ? Math.max(0, (modelo.ahora - s.received_at_ms) / 1000) : null, caduca = edad != null && edad > CADUCA_S, vivo = !!s && !caduca && modelo.enlace !== 'error';
+      var f = vivo ? (s.fields || {}) : null, hist = historias[clave] || [];
+      function v(k) { return f && f[k] != null ? f[k] : null; }
+
+      var est = f ? COD_ESTADO[f.gripper_state] : null, enFalla = est === 'fault';
+      pasos.forEach(function (c, i) { c.update({ estado: !enFalla && PASOS[i][0] === est ? 'activo' : 'pendiente', progreso: 0, duracion: '' }); });
+      pFalla.update({ estado: enFalla ? 'falla' : 'pendiente', duracion: enFalla ? 'reportada' : est == null ? 'sin estado' : 'sin falla' });
+      iEnlace.update(modelo.enlace === 'ok' ? { estado: 'on', texto: 'Conectado' } : modelo.enlace === 'error' ? { estado: 'falla', texto: 'Sin conexión' } : { estado: 'off', texto: 'Conectando' });
+      iMuestra.update(!s ? { estado: 'off', texto: 'Sin muestras' } : caduca ? { estado: 'aviso', texto: 'Obsoleta · ' + fmt(edad, 0) + ' s' } : { estado: 'on', texto: 'Hace ' + fmt(edad, 1) + ' s' });
+      iOrigen.update({ estado: origen === 'real' ? 'on' : 'off', texto: ORIGENES[origen] });
+      R.sub.textContent = dispositivo + ' · monitor';
+      var activos = AVISOS.filter(function (a) { return a.campo && v(a.campo) === 1; }).map(function (a) { return a.nombre.toLowerCase(); });
+      banner.hidden = !enFalla; if (enFalla) banner.querySelector('span').textContent = 'El controlador reporta estado de falla' + (activos.length ? ': ' + activos.join(', ') + '.' : '.') + ' Este panel solo informa; la parada la hace el controlador.';
+
+      var txt = '', boton = false;
+      if (modelo.enlace === 'error') txt = 'Sin conexión con Node-RED en ' + API + '. Comprueba que el stack esté levantado con: python scripts/manage.py estado';
+      else if (modelo.enlace === 'ok' && !s) { boton = origen === 'real' && ms.some(function (x) { return x.source === 'simulated'; }); txt = 'No hay muestras de origen ' + ORIGENES[origen].toLowerCase() + ' para ' + dispositivo + '.' + (boton ? ' El simulador publica con origen simulado.' : ' Conecta el ESP32 o levanta la demo con: python scripts/manage.py demo'); }
+      else if (caduca) txt = 'La última muestra llegó hace ' + fmt(edad, 0) + ' s. Los valores instantáneos se ocultan después de 5 s; el histórico sigue en Grafana.';
+      aviso.hidden = !txt; aviso.querySelector('span').textContent = txt; aviso.querySelector('button').hidden = !boton;
+
+      pAp.update({ sp: v('opening_target_mm'), pv: v('opening_mm') }); pF.update({ sp: v('force_limit_n'), pv: v('grip_force_n') });
+      var vel = v('opening_speed_mm_s'); lectura(R.vel, vel, 1, 'mm/s'); R.velTxt.textContent = vel == null ? '' : vel > 0.05 ? 'abriendo' : vel < -0.05 ? 'cerrando' : 'en reposo';
+      lectura(R.ciclo, v('cycle_time_s'), 1, 's');
+      R.mDev.textContent = s ? s.device_id : '—'; R.mBoot.textContent = s ? s.boot_id : '—'; R.mSeq.textContent = s ? fmt(s.seq, 0) : '—';
+      R.mCal.textContent = s ? (s.calibration_id === 'not-provided' ? 'No informada' : s.calibration_id) : '—'; R.mEdad.textContent = edad == null ? '—' : fmt(edad, 1) + ' s';
+
+      var ap = v('opening_mm'), obj = v('opening_target_mm'), apD = clamp(ap == null ? 85 : ap, 0, 85);
+      var mcp = clamp(Math.asin(clamp((34.6 - apD / 2) / 45.2, -1, 1)) * 180 / Math.PI + 10, 0, 60);
+      esq.update({ mcp: mcp, pip: { A: 0, B: 0, C: 0 }, falla: null, tamPieza: 0, pieza: false, apertura: apD }, { apertura: clamp(obj == null ? apD : obj, 0, 85), agarre: 'power' });
+      esq.el.classList.toggle('mon-apagado', ap == null); esq.el.querySelector('[data-r=tAp]').textContent = ap == null ? 'Sin datos' : fmt(ap, 1) + ' mm';
+      Array.prototype.forEach.call(esq.el.querySelectorAll('.obj'), function (l) { l.style.display = obj == null ? 'none' : ''; });
+      lectura(R.ap, ap, 1, 'mm'); lectura(R.f, v('grip_force_n'), 1, 'N');
+      R.estTxt.textContent = est == null ? 'Estado sin datos' : enFalla ? 'Falla' : PASOS.filter(function (p) { return p[0] === est; })[0][1];
+      binario(bObj, v('object_detected'), 'Sí', 'No'); binario(bLa, v('limit_open'), 'On', 'Off'); binario(bLc, v('limit_closed'), 'On', 'Off');
+      var fr = v('opening_out_of_range'); bFr.update(fr == null ? { estado: 'off', texto: 'Sin datos' } : fr ? { estado: 'aviso', texto: 'Fuera' } : { estado: 'on', texto: 'Dentro' });
+      tr.update(hist, modelo.ahora, vivo);
+
+      lectura(R.axT, v('ax_position_ticks'), 0, 'ticks'); lectura(R.axG, v('ax_position_deg'), 1, '°'); lectura(R.axV, v('ax_speed_rpm'), 1, 'rpm');
+      lectura(R.axC, v('ax_load_pct'), 0, '%'); lectura(R.axU, v('ax_voltage_v'), 1, 'V'); lectura(R.axK, v('ax_temperature_c'), 1, '°C');
+      var tk = v('ax_position_ticks'), cg = v('ax_load_pct');
+      R.axPos.style.setProperty('--pv', (tk == null ? 0 : clamp(tk / 1023, 0, 1) * 100) + '%'); R.axPos.setAttribute('aria-label', 'Posición ' + (tk == null ? 'sin datos' : fmt(tk, 0) + ' de 1023 ticks'));
+      R.axCar.style.setProperty('--pv', (cg == null ? 0 : clamp(Math.abs(cg) / 100, 0, 1) * 100) + '%'); R.axCar.setAttribute('aria-label', 'Carga ' + (cg == null ? 'sin datos' : fmt(cg, 0) + ' %'));
+
+      var kI = M.map(function (i) { return 'mi' + i; }), kR = M.map(function (i) { return 'mr' + i; });
+      var esc_ = { i: bonito(Math.max(extremo(hist, kI), 0.05) * 1.1), r: bonito(Math.max(extremo(hist, kR), 5) * 1.1), rNeg: hayNegativo(hist, kR) };
+      R.mEsc.textContent = 'escala común · 0 – ' + fmt(esc_.i, decDe(esc_.i)) + ' A · ' + (esc_.rNeg ? '±' : '0 – ') + fmt(esc_.r, 0) + ' rpm · último minuto';
+      tarj.forEach(function (t) { t.update(f, hist, modelo.ahora - VENTANA_MS, esc_); });
+
+      var nAct = 0;
+      AVISOS.forEach(function (a) {
+        var e = estAv[a.id], val = a.id === 'obsoleta' ? (s ? (caduca ? 1 : 0) : null) : v(a.campo), activo = val === 1;
+        if (activo && !e.hora) e.hora = hora(new Date()); if (!activo) { e.rec = false; e.hora = null; } if (activo) nAct++;
+        var valor = '—';
+        if (a.id === 'bloqueo' && f) { var bl = M.filter(function (i) { return f['m' + i + '_blocked'] === 1; }); valor = bl.length ? bl.map(function (i) { return 'M' + i; }).join(', ') : 'Ningún motor'; }
+        if (a.id === 'sobre' && f) { var mx = Math.max.apply(null, M.map(function (i) { return f['m' + i + '_current_a'] == null ? -1 : f['m' + i + '_current_a']; })); valor = mx < 0 ? '—' : 'máx. ' + fmt(mx, 3) + ' A'; }
+        if (a.id === 'fuera' && ap != null) valor = fmt(ap, 1) + ' mm';
+        if (a.id === 'obsoleta' && edad != null) valor = fmt(edad, 1) + ' s';
+        a.fila.update({ estado: activo ? (e.rec ? 'reconocida' : 'activa') : 'normal', valor: valor, hora: e.hora });
+        if (val == null) a.fila.el.querySelector('.hmi-alarma__estado').textContent = 'Sin datos';
+      });
+      R.alTxt.textContent = nAct ? nAct + (nAct === 1 ? ' aviso activo' : ' avisos activos') : vivo ? 'Sin avisos activos' : 'Sin datos recientes';
+
+      var con = 0; CONTRATO.forEach(function (c, i) { var t = f ? c[4](f) : null; if (t != null) con++; celdas[i].innerHTML = t == null ? ND : esc(t); });
+      R.conDato.textContent = con + ' con dato ahora';
+    }
+
+    var fuente = crearFuente();
+    fuente.on(function (m, hs) { modelo = m; historias = hs; pinta(); });
+    pinta(); fuente.start();
+    return { el: root };
+  }
+
+  window.GripperMonitor = { Monitor: Monitor };
+})();
+</script>
+<script>
+GripperMonitor.Monitor(document.getElementById('app'));
+</script>
+</body>
+</html>

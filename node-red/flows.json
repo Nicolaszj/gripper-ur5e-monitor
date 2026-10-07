@@ -1,0 +1,195 @@
+[
+  {
+    "id": "gripper-flow",
+    "type": "tab",
+    "label": "ESP32 → InfluxDB",
+    "disabled": false
+  },
+  {
+    "id": "ingress",
+    "type": "http in",
+    "z": "gripper-flow",
+    "name": "POST telemetría",
+    "wires": [
+      [
+        "validate"
+      ]
+    ],
+    "url": "/api/telemetry",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 130,
+    "y": 100
+  },
+  {
+    "id": "validate",
+    "type": "function",
+    "z": "gripper-flow",
+    "name": "Validar telemetría",
+    "wires": [
+      [
+        "write"
+      ],
+      [
+        "response"
+      ]
+    ],
+    "outputs": 2,
+    "x": 360,
+    "y": 100,
+    "func": "\nconst t = global.get('telemetry');\nlet key;\ntry {\n  const body = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;\n  key = `${body.device_id}:${body.source}`;\n  const pending = flow.get('pending') || {};\n  if (pending[key]) { msg.statusCode=429; msg.payload={error:'Muestra en proceso; reintentar'}; return [null,msg]; }\n  const latest = flow.get('latest') || {};\n  const sample = t.normalize(body, latest[key]);\n  pending[key] = true; flow.set('pending', pending);\n  msg.sampleKey = key; msg.sample = sample.next;\n  msg.method = 'POST';\n  msg.url = `${env.get('INFLUX_URL')}/api/v2/write?org=${encodeURIComponent(env.get('INFLUX_ORG'))}&bucket=${encodeURIComponent(env.get('INFLUX_BUCKET'))}&precision=ms`;\n  msg.headers = {'Authorization':`Token ${env.get('INFLUX_TOKEN')}`, 'Content-Type':'text/plain; charset=utf-8'};\n  msg.payload = sample.line;\n  return [msg,null];\n} catch (error) {\n  msg.statusCode=error.status || 400; msg.payload={error:error.message}; return [null,msg];\n}",
+    "initialize": "flow.set('pending', {});",
+    "finalize": "",
+    "libs": []
+  },
+  {
+    "id": "write",
+    "type": "http request",
+    "z": "gripper-flow",
+    "name": "Guardar en InfluxDB",
+    "wires": [
+      [
+        "result"
+      ]
+    ],
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "requestTimeout": "5000",
+    "x": 600,
+    "y": 100
+  },
+  {
+    "id": "result",
+    "type": "function",
+    "z": "gripper-flow",
+    "name": "Confirmar escritura",
+    "wires": [
+      [
+        "response"
+      ]
+    ],
+    "outputs": 1,
+    "x": 820,
+    "y": 100,
+    "func": "\nconst pending=flow.get('pending') || {}; delete pending[msg.sampleKey]; flow.set('pending',pending);\nif (msg.statusCode === 204) {\n  const latest=flow.get('latest') || {}; latest[msg.sampleKey]=msg.sample; flow.set('latest',latest);\n  msg.statusCode=201; msg.payload={stored:true,device_id:msg.sample.device_id,source:msg.sample.source,seq:msg.sample.seq};\n} else {\n  msg.statusCode=502; msg.payload={stored:false,error:'InfluxDB no confirmo la escritura; reintentar la misma muestra'};\n}\nmsg.headers={'Content-Type':'application/json'}; return msg;"
+  },
+  {
+    "id": "catch-write",
+    "type": "catch",
+    "z": "gripper-flow",
+    "name": "Fallo de escritura",
+    "wires": [
+      [
+        "failed"
+      ]
+    ],
+    "scope": [
+      "write"
+    ],
+    "uncaught": false,
+    "x": 610,
+    "y": 180
+  },
+  {
+    "id": "failed",
+    "type": "function",
+    "z": "gripper-flow",
+    "name": "Respuesta sin filtrar secretos",
+    "wires": [
+      [
+        "response"
+      ]
+    ],
+    "outputs": 1,
+    "x": 850,
+    "y": 180,
+    "func": "\nconst pending=flow.get('pending') || {}; delete pending[msg.sampleKey]; flow.set('pending',pending);\nmsg.statusCode=502; msg.payload={stored:false,error:'Almacenamiento no disponible; reintentar'};\nmsg.headers={'Content-Type':'application/json'}; return msg;"
+  },
+  {
+    "id": "response",
+    "type": "http response",
+    "z": "gripper-flow",
+    "name": "Respuesta API",
+    "wires": [],
+    "statusCode": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 1090,
+    "y": 100
+  },
+  {
+    "id": "health-in",
+    "type": "http in",
+    "z": "gripper-flow",
+    "name": "Health",
+    "wires": [
+      [
+        "health"
+      ]
+    ],
+    "url": "/api/health",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 130,
+    "y": 300
+  },
+  {
+    "id": "health",
+    "type": "function",
+    "z": "gripper-flow",
+    "name": "Estado servicio",
+    "wires": [
+      [
+        "response"
+      ]
+    ],
+    "outputs": 1,
+    "x": 370,
+    "y": 300,
+    "func": "msg.payload={service:'maximiliano-estudiante',version:'1.0.0',status:'up'}; msg.statusCode=200; return msg;"
+  },
+  {
+    "id": "status-in",
+    "type": "http in",
+    "z": "gripper-flow",
+    "name": "Últimas muestras",
+    "wires": [
+      [
+        "status"
+      ]
+    ],
+    "url": "/api/status",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 140,
+    "y": 400
+  },
+  {
+    "id": "status",
+    "type": "function",
+    "z": "gripper-flow",
+    "name": "Estado y antigüedad",
+    "wires": [
+      [
+        "response"
+      ]
+    ],
+    "outputs": 1,
+    "x": 390,
+    "y": 400,
+    "func": "\nmsg.statusCode=200; msg.payload={samples:Object.values(flow.get('latest') || {}).map(s => ({\n  ...s,age_s:(Date.now()-s.received_at_ms)/1000,stale:Date.now()-s.received_at_ms>5000\n}))}; return msg;"
+  }
+]

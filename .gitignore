@@ -1,0 +1,4 @@
+.env
+credenciales.txt
+__pycache__/
+*.log
